@@ -1,7 +1,9 @@
+//api/user-reservations/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from "@/auth.config";
 import { prisma } from '@/server/db';
+import { ReservationStatus } from "@prisma/client";
 
 export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions);
@@ -18,7 +20,15 @@ export async function GET(req: NextRequest) {
 
     try {
         const reservations = await prisma.reservation.findMany({
-            where: { userId },
+            where: {
+                userId,
+                status: {
+                    not: ReservationStatus.Cancelled
+                },
+                numberOfTickets: {
+                    gt: 0
+                }
+            },
             include: {
                 event: {
                     select: {
@@ -34,7 +44,7 @@ export async function GET(req: NextRequest) {
     } catch (error) {
         console.error('Error fetching user reservations:', error);
         return NextResponse.json({
-            error: 'Erreur lors de la récupération des réservations de lutilisateur'
+            error: 'Erreur lors de la récupération des réservations de l\'utilisateur'
         }, { status: 500 });
     }
 }

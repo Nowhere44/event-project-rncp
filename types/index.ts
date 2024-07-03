@@ -177,8 +177,10 @@ export interface IEvent {
         id: string;
         first_name: string;
         last_name: string;
+        averageRating?: number;
     };
     reservations: IReservation[];
+    availableTickets?: number; // Ajoutez cette ligne
 }
 
 export interface ITag {
@@ -201,5 +203,41 @@ export interface IReservation {
         id: string;
         title: string;
         start_time: Date;
+        end_time: Date;
+        event_date: Date;
+        reservationDate: Date;
+    };
+    rating?: number;
+    comment?: string;
+}
+
+export interface IRating {
+    id: string;
+    reservationId: string;
+    eventId: string;
+    userId: string;
+    rating: number;
+    comment?: string;
+    createdAt: Date;
+}
+
+
+export interface IUser {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    profile_picture?: string;
+    role: string;
+    totalRevenue?: number;
+
+}
+
+export interface Message {
+    id: string;
+    content: string;
+    createdAt: Date;
+    user: {
+        first_name: string;
     };
 }

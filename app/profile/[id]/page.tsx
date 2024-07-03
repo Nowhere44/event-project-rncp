@@ -1,3 +1,4 @@
+// app/profile/[id]/page.tsx
 'use client'
 
 import { useSession } from 'next-auth/react';
@@ -5,7 +6,7 @@ import { useRouter, useParams } from 'next/navigation';
 import ProfileComponent from '../_components/profile-component';
 import EventList from '@/app/events/_components/event-list';
 import { useEffect, useState } from 'react';
-import { IEvent, IReservation } from '@/types';
+import { IEvent, IReservation, IUser } from '@/types';
 import EventStats from '../_components/event-stats';
 import Link from 'next/link';
 
@@ -16,12 +17,20 @@ export default function ProfilePage() {
     const id = params.id as string;
     const [userEvents, setUserEvents] = useState<IEvent[]>([]);
     const [userReservations, setUserReservations] = useState<IReservation[]>([]);
+    const [userData, setUserData] = useState<IUser | null>(null);
 
     useEffect(() => {
-        const fetchUserEventsAndReservations = async () => {
+        const fetchUserData = async () => {
             if (session?.user?.id === id) {
+                const userResponse = await fetch(`/api/users/${id}`);
+                if (userResponse.ok) {
+                    const userData = await userResponse.json();
+                    console.log('Données utilisateur récupérées:', userData);
+                    setUserData(userData);
+                }
+
                 // Fetch user's events
-                const eventsResponse = await fetch(`/api/reservations?userId=${id}`);
+                const eventsResponse = await fetch(`/api/user-events?userId=${id}`);
                 if (eventsResponse.ok) {
                     const events = await eventsResponse.json();
                     setUserEvents(events);
@@ -36,7 +45,7 @@ export default function ProfilePage() {
             }
         };
 
-        fetchUserEventsAndReservations();
+        fetchUserData();
     }, [id, session]);
 
     if (status === 'loading') return <div>Chargement...</div>;
@@ -51,7 +60,7 @@ export default function ProfilePage() {
 
     return (
         <>
-            <ProfileComponent userId={id} />
+            <ProfileComponent userId={id} userData={userData} />
             <EventStats events={userEvents} />
             <div className="mt-8">
                 <h2 className="text-2xl font-bold mb-4">Mes événements et leurs réservations</h2>
@@ -64,7 +73,9 @@ export default function ProfilePage() {
                         <ul>
                             {event.reservations.map(reservation => (
                                 <li key={reservation.id}>
-                                    {reservation.user.first_name} {reservation.user.last_name} - {reservation.numberOfTickets} place(s)
+                                    {reservation.user ?
+                                        `${reservation.user.first_name} ${reservation.user.last_name}` :
+                                        'Utilisateur inconnu'} - {reservation.numberOfTickets} place(s)
                                 </li>
                             ))}
                         </ul>
@@ -78,7 +89,7 @@ export default function ProfilePage() {
                         <div className="mb-4 p-4 border rounded-lg hover:bg-gray-100">
                             <h3 className="text-xl font-semibold">{reservation.event.title}</h3>
                             <p>Nombre de tickets : {reservation.numberOfTickets}</p>
-                            <p>Montant total : {reservation.totalAmount} €</p>
+                            <p>Montant total : {Number(reservation.totalAmount).toFixed(2)} €</p>
                         </div>
                     </Link>
                 ))}

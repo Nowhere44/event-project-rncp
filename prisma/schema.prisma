@@ -13,30 +13,37 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+
+
 enum Role {
   User
   Admin
 }
 
-
 model User {
-  id            String          @id @default(cuid())
-  first_name     String
-  last_name      String
-  email          String   @unique
-  emailVerified DateTime?
-  password       String
-  date_of_birth  DateTime?
-  profile_picture String?
-  accounts      Account[] 
-  role           Role     @default(User)
-  created_at     DateTime @default(now())
-  updated_at     DateTime @updatedAt
-    events          Event[]
-    reservations Reservation[]
+  id                    String           @id @default(cuid())
+  first_name            String
+  last_name             String
+  email                 String           @unique
+  emailVerified         DateTime?
+  password              String
+  date_of_birth         DateTime?
+  profile_picture       String?
+  accounts              Account[]
+  role                  Role             @default(User)
+  created_at            DateTime         @default(now())
+  updated_at            DateTime         @updatedAt
+  events                Event[]
+  reservations          Reservation[]
+  totalRevenue          Decimal          @default(0)
+  averageRating         Float?
+  messages              Message[]
+  mentions              Mention[]
+  sentPrivateMessages   PrivateMessage[] @relation("SentPrivateMessages")
+  receivedPrivateMessages PrivateMessage[] @relation("ReceivedPrivateMessages")
+   usedPromoCodes PromoCode[]
 }
 
- 
 model Account {
   userId            String
   type              String
@@ -49,64 +56,79 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
- 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
- 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
- 
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@id([provider, providerAccountId])
 }
 
 model Event {
-  id              String   @id @default(cuid())
-  title           String
-  description     String
-  imageUrl        String?  // Ajout de l'URL de l'image
-  event_date      DateTime
-  start_time      DateTime
-  end_time        DateTime
-  location        String
-  latitude        Float?
-  longitude       Float?
-  capacity        Int
-  is_paid         Boolean
-  price           Float?
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
-  user            User     @relation(fields: [userId], references: [id])
-  userId          String
-  tags            EventTag[]
-   reservations Reservation[]
+  id           String        @id @default(cuid())
+  title        String
+  description  String
+  imageUrl     String?
+  event_date   DateTime
+  start_time   DateTime
+  end_time     DateTime
+  location     String
+  latitude     Float?
+  longitude    Float?
+  capacity     Int
+  is_paid      Boolean
+  price        Float?
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @updatedAt
+  user         User          @relation(fields: [userId], references: [id])
+  userId       String
+  tags         EventTag[]
+  reservations Reservation[]
+  averageRating Float?
+  promoCodes PromoCode[]
+}
+
+model PromoCode {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  discount  Int
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id])
+  used      Boolean  @default(false)
+    usedById   String?
+  usedByUser User?    @relation(fields: [usedById], references: [id])
+  usedAt     DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Tag {
-  id        String     @id @default(cuid())
-  name      String     @unique
-  events    EventTag[]
+  id     String     @id @default(cuid())
+  name   String     @unique
+  events EventTag[]
 }
 
 model EventTag {
-  event     Event    @relation(fields: [eventId], references: [id])
-  eventId   String
-  tag       Tag      @relation(fields: [tagId], references: [id])
-  tagId     String
+  event   Event  @relation(fields: [eventId], references: [id])
+  eventId String
+  tag     Tag    @relation(fields: [tagId], references: [id])
+  tagId   String
 
   @@id([eventId, tagId])
 }
 
-
 model Reservation {
-  id               String   @id @default(cuid())
-  eventId          String
-  userId           String
-  numberOfTickets  Int
-  totalAmount      Decimal
-  reservationDate  DateTime @default(now())
-  event            Event    @relation(fields: [eventId], references: [id])
-  user             User     @relation(fields: [userId], references: [id])
-  payment          Payment?
-    status           ReservationStatus @default(Pending)
+  id              String            @id @default(cuid())
+  eventId         String
+  userId          String
+  numberOfTickets Int
+  totalAmount     Decimal
+  reservationDate DateTime          @default(now())
+  event           Event             @relation(fields: [eventId], references: [id])
+  user            User              @relation(fields: [userId], references: [id])
+  payment         Payment?
+  status          ReservationStatus @default(Pending)
+  appliedPromoCode String? 
+  stripeSessionId String? @unique
 }
 
 enum ReservationStatus {
@@ -116,17 +138,47 @@ enum ReservationStatus {
 }
 
 model Payment {
-  id            String     @id @default(cuid())
-  reservationId String     @unique
+  id            String        @id @default(cuid())
+  reservationId String        @unique
   amount        Decimal
-  paymentDate   DateTime   @default(now())
+  paymentDate   DateTime      @default(now())
   paymentMethod String
   status        PaymentStatus
-  reservation   Reservation @relation(fields: [reservationId], references: [id])
+  reservation   Reservation   @relation(fields: [reservationId], references: [id])
 }
 
 enum PaymentStatus {
   Pending
   Paid
   Failed
+}
+
+model Message {
+  id        String    @id @default(cuid())
+  content   String
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id])
+  userId    String
+  type      String
+  mentions  Mention[]
+}
+
+model Mention {
+  id        String  @id @default(cuid())
+  message   Message @relation(fields: [messageId], references: [id])
+  messageId String
+  user      User    @relation(fields: [userId], references: [id])
+  userId    String
+  read      Boolean @default(false)
+}
+
+model PrivateMessage {
+  id         String   @id @default(cuid())
+  content    String
+  type       String
+  senderId   String
+  receiverId String
+  createdAt  DateTime @default(now())
+  sender     User     @relation("SentPrivateMessages", fields: [senderId], references: [id])
+  receiver   User     @relation("ReceivedPrivateMessages", fields: [receiverId], references: [id])
 }

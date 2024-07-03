@@ -3,16 +3,18 @@
 import { useState, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { IUser } from '@/types';
 
 interface ProfileComponentProps {
     userId: string;
+    userData: IUser | null;
 }
 
-export default function ProfileComponent({ userId }: ProfileComponentProps) {
+export default function ProfileComponent({ userId, userData }: ProfileComponentProps) {
     const { data: session, update, status } = useSession();
     const router = useRouter();
     const [isEditing, setIsEditing] = useState(false);
-    const [userData, setUserData] = useState({
+    const [editedUserData, setEditedUserData] = useState({
         firstName: '',
         lastName: '',
         email: '',
@@ -20,15 +22,15 @@ export default function ProfileComponent({ userId }: ProfileComponentProps) {
     });
 
     useEffect(() => {
-        if (session?.user) {
-            setUserData({
-                firstName: session.user.firstName || '',
-                lastName: session.user.lastName || '',
-                email: session.user.email || '',
-                image: session.user.image || '',
+        if (userData) {
+            setEditedUserData({
+                firstName: userData.first_name || '',
+                lastName: userData.last_name || '',
+                email: userData.email || '',
+                image: userData.profile_picture || '',
             });
         }
-    }, [session]);
+    }, [userData]);
 
     if (status === 'loading') {
         return <div className="flex justify-center items-center h-screen">Chargement...</div>;
@@ -45,19 +47,14 @@ export default function ProfileComponent({ userId }: ProfileComponentProps) {
 
     const handleEdit = () => {
         setIsEditing(true);
-    };
+    }
 
     const handleSave = async () => {
         try {
             const response = await fetch(`/api/user/${userId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    firstName: userData.firstName,
-                    lastName: userData.lastName,
-                    email: userData.email,
-                    image: userData.image,
-                }),
+                body: JSON.stringify(editedUserData),
             });
 
             if (response.ok) {
@@ -85,10 +82,7 @@ export default function ProfileComponent({ userId }: ProfileComponentProps) {
     const handleDelete = async () => {
         if (window.confirm('Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.')) {
             try {
-                const response = await fetch(`/api/user/${userId}`, {
-                    method: 'DELETE',
-                });
-
+                const response = await fetch(`/api/user/${userId}`, { method: 'DELETE' });
                 if (response.ok) {
                     await signOut({ callbackUrl: '/' });
                 } else {
@@ -100,63 +94,59 @@ export default function ProfileComponent({ userId }: ProfileComponentProps) {
         }
     };
 
+    if (!session?.user || !userData) {
+        return null;
+    }
+
+    console.log('userData:', userData);
+
     return (
-        <div className="max-w-3xl mx-auto mt-10 p-6 bg-white shadow-lg rounded-lg">
+        <div className="bg-white shadow-lg rounded-lg p-6 md:p-8 lg:p-12 max-w-3xl mx-auto mt-12">
             <h1 className="text-4xl font-bold mb-6 text-center text-gray-800">Profil de {session.user.firstName}</h1>
-            {isEditing ? (
-                <div className="space-y-6">
-                    <input
-                        type="text"
-                        value={userData.firstName}
-                        onChange={(e) => setUserData({ ...userData, firstName: e.target.value })}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        placeholder="Prénom"
-                    />
-                    <input
-                        type="text"
-                        value={userData.lastName}
-                        onChange={(e) => setUserData({ ...userData, lastName: e.target.value })}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        placeholder="Nom"
-                    />
-                    <input
-                        type="email"
-                        value={userData.email}
-                        onChange={(e) => setUserData({ ...userData, email: e.target.value })}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        placeholder="Email"
-                    />
-                    <input
-                        type="text"
-                        value={userData.image || ''}
-                        onChange={(e) => setUserData({ ...userData, image: e.target.value })}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        placeholder="URL de l'image de profil"
-                    />
-                    <button onClick={handleSave} className="w-full py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-300">Sauvegarder</button>
+            <div className="flex flex-col items-center">
+                <div className="w-32 h-32 mb-4">
+                    {session.user.image && (
+                        <img src={session.user.image} alt="Profile" className="w-32 h-32 rounded-full object-cover shadow-md" />
+                    )}
                 </div>
-            ) : (
-                <div className="space-y-4 text-center">
-                    <div className="flex justify-center">
-                        {session.user.image && (
-                            <img src={session.user.image} alt="Profile" className="w-32 h-32 rounded-full mb-4" />
+                {isEditing ? (
+                    <div className="space-y-4 w-full">
+                        {['firstName', 'lastName', 'email', 'image'].map((field) => (
+                            <input
+                                key={field}
+                                type={field === 'email' ? 'email' : 'text'}
+                                value={editedUserData[field as keyof typeof editedUserData]}
+                                onChange={(e) => setEditedUserData({ ...editedUserData, [field]: e.target.value })}
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
+                            />
+                        ))}
+                        <button onClick={handleSave} className="w-full py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-300">
+                            Sauvegarder
+                        </button>
+                    </div>
+                ) : (
+                    <div className="space-y-4 text-center w-full">
+                        {['lastName', 'firstName', 'email'].map((field) => (
+                            <p key={field} className="text-xl">
+                                <strong>{field.charAt(0).toUpperCase() + field.slice(1)}:</strong> {session.user[field as keyof typeof session.user]}
+                            </p>
+                        ))}
+                        {userData && userData.totalRevenue && Number(userData.totalRevenue) > 0 && (
+                            <p className="text-xl"><strong>Revenu total:</strong> {Number(userData.totalRevenue).toFixed(2)} €</p>
                         )}
                     </div>
-                    <p className="text-xl"><strong>Nom:</strong> {session.user.lastName}</p>
-                    <p className="text-xl"><strong>Prénom:</strong> {session.user.firstName}</p>
-                    <p className="text-xl"><strong>Email:</strong> {session.user.email}</p>
-                    <p className="text-xl"><strong>Role:</strong> {session.user.role}</p>
-                </div>
-            )}
-            <div className="mt-8 flex justify-center space-x-4">
-                {!isEditing && (
-                    <button onClick={handleEdit} className="py-3 px-6 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-300">
-                        Modifier le profil
-                    </button>
                 )}
-                <button onClick={handleDelete} className="py-3 px-6 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-300">
-                    Supprimer le compte
-                </button>
+                <div className="mt-8 flex justify-center space-x-4 w-full">
+                    {!isEditing && (
+                        <button onClick={handleEdit} className="py-3 px-6 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-300">
+                            Modifier le profil
+                        </button>
+                    )}
+                    <button onClick={handleDelete} className="py-3 px-6 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-300">
+                        Supprimer le compte
+                    </button>
+                </div>
             </div>
         </div>
     );

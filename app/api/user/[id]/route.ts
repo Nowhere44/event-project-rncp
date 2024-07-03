@@ -1,3 +1,4 @@
+//api/user/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { updateUser, deleteUser } from '@/actions/user';
 import { getServerSession } from "next-auth/next";

@@ -1,5 +1,4 @@
 'use client';
-
 import { IEvent } from '@/types';
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
@@ -11,21 +10,24 @@ type EventStatsProps = {
 };
 
 const EventStats = ({ events }: EventStatsProps) => {
-    const eventPopularity = events.map(event => ({
-        ...event,
-        reservationCount: event.reservations.reduce((sum, res) => sum + res.numberOfTickets, 0)
-    })).sort((a, b) => b.reservationCount - a.reservationCount);
-
-    const top5Events = eventPopularity.slice(0, 5);
+    const eventRevenues = events.map(event => {
+        const revenue = event.reservations.reduce((sum, res) => sum + Number(res.totalAmount), 0);
+        return {
+            title: event.title,
+            revenue: revenue
+        };
+    }).sort((a, b) => b.revenue - a.revenue);
 
     const data = {
-        labels: top5Events.map(event => event.title),
+        labels: eventRevenues.map(event => event.title),
         datasets: [
             {
-                label: 'Nombre de réservations',
-                data: top5Events.map(event => event.reservationCount),
+                label: 'Revenus par événement',
+                data: eventRevenues.map(event => event.revenue),
                 backgroundColor: 'rgba(75, 192, 192, 0.6)',
-            }
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1,
+            },
         ],
     };
 
@@ -37,9 +39,18 @@ const EventStats = ({ events }: EventStatsProps) => {
             },
             title: {
                 display: true,
-                text: 'Top 5 des événements les plus populaires',
+                text: 'Revenus par événement',
             },
         },
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Revenus (€)'
+                }
+            }
+        }
     };
 
     return (

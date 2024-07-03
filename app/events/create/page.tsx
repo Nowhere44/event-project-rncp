@@ -11,9 +11,15 @@ export default async function CreateEventPage() {
     }
 
     return (
-        <div className="container mx-auto py-8">
-            <h1 className="text-2xl font-bold mb-4">Créer un nouvel événement</h1>
-            <EventForm userId={session.user.id} />
+        <div className="bg-gray-50 px-4 py-24 sm:px-6 lg:px-4">
+            <div className="mx-auto max-w-6xl">
+                <h1 className="text-4xl font-bold text-gray-900 text-center mb-8">
+                    Créer un nouvel événement
+                </h1>
+                <div className="bg-white shadow-lgrounded-lg p-6 sm:p-10">
+                    <EventForm userId={session.user.id} />
+                </div>
+            </div>
         </div>
     );
 }

@@ -1,8 +1,8 @@
+// /api/events/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from "@/auth.config";
-import { createEvent } from '@/actions/event';
-import { prisma } from '@/server/db';
+import { createEvent, getEvents } from '@/actions/event';
 
 export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions);
@@ -30,49 +30,21 @@ export async function GET(request: NextRequest) {
     const tags = searchParams.get('category');
     const date = searchParams.get('date');
     const isPaid = searchParams.get('isPaid');
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
 
-    const where: any = {};
-
-    if (query) {
-        where.OR = [
-            { title: { contains: query, mode: 'insensitive' } },
-            { description: { contains: query, mode: 'insensitive' } },
-        ];
-    }
-
-    if (tags) {
-        where.tags = {
-            some: {
-                tag: {
-                    name: { in: tags.split(',') },
-                },
-            },
-        };
-    }
-
-    where.event_date = {
-        gte: new Date(),
+    const params: any = {
+        page,
+        limit,
+        search: query || undefined,
+        category: tags || undefined,
+        isPaid: isPaid === 'true' ? true : isPaid === 'false' ? false : undefined,
+        date: date ? new Date(date) : undefined
     };
 
-    if (date) {
-        where.event_date = {
-            gte: new Date(date),
-            lt: new Date(new Date(date).setDate(new Date(date).getDate() + 1)),
-        };
-    }
-
-
-    if (isPaid !== null) {
-        where.is_paid = isPaid === 'true';
-    }
-
     try {
-        const events = await prisma.event.findMany({
-            where,
-            include: { tags: { include: { tag: true } } },
-        });
-        const total = await prisma.event.count({ where });
-        return NextResponse.json({ events, total, totalPages: Math.ceil(total / 10) });
+        const { events, total, totalPages } = await getEvents(params);
+        return NextResponse.json({ events, total, totalPages });
     } catch (error) {
         console.error('Error searching events:', error);
         return NextResponse.json({ error: 'Error searching events' }, { status: 500 });

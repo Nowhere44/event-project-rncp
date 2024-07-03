@@ -1,5 +1,3 @@
-// app/events/_components/event-card.tsx
-
 import { formatDateTime } from '@/lib/utils'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -17,6 +15,7 @@ const EventCard = ({ event, hasOrderLink, hidePrice }: CardProps) => {
     const { data: session, status } = useSession();
 
     const isOwner = session?.user?.id === event.userId;
+    const availableTickets = event.availableTickets ?? 'N/A';
 
     return (
         <div className="group relative flex min-h-[380px] w-full max-w-[400px] flex-col overflow-hidden rounded-xl bg-white shadow-md transition-all hover:shadow-lg md:min-h-[438px]">
@@ -42,8 +41,11 @@ const EventCard = ({ event, hasOrderLink, hidePrice }: CardProps) => {
                     {formatDateTime(event.start_time).dateTime}
                 </p>
                 <p className="">
-                    Nombre de place : {event.capacity}
+                    Capacité totale : {event.capacity}
                 </p>
+                {!hasOrderLink && <p className="">
+                    Places restantes : {availableTickets}
+                </p>}
                 <p className="p-medium-16 p-medium-18 text-grey-500">
                     {isOwner && 'Vous êtes l\'organisateur'}
                 </p>
@@ -51,15 +53,16 @@ const EventCard = ({ event, hasOrderLink, hidePrice }: CardProps) => {
                     <p className="p-medium-16 md:p-medium-20 line-clamp-2 flex-1 text-black">{event.title}</p>
                 </Link>
                 <div className="flex-between w-full">
-                    <p className="p-medium-14 md:p-medium-16 text-grey-600">
-                        {event.user?.first_name} {event.user?.last_name}
-                    </p>
-                    {hasOrderLink && (
-                        <Link href={`/orders?eventId=${event.id}`} className="flex gap-2">
-                            <p className="text-primary-500">Détails de la commande</p>
-                            <Image src="/assets/icons/arrow.svg" alt="search" width={10} height={10} />
-                        </Link>
-                    )}
+                    <div className="flex-between w-full">
+                        <p className="p-medium-14 md:p-medium-16 text-grey-600">
+                            {event.user?.first_name} {event.user?.last_name}
+                        </p>
+                        {!hasOrderLink && (
+                            <p className="ml-2">
+                                Note: {event.user?.averageRating ? event.user.averageRating.toFixed(1) : 'N/A'}
+                            </p>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

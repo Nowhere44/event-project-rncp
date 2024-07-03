@@ -17,13 +17,13 @@ export default function Home() {
   const fetchEvents = useCallback(async (filters = {}) => {
     setIsLoading(true);
     try {
-      const queryParams = new URLSearchParams(filters).toString();
+      const queryParams = new URLSearchParams({ ...filters, limit: '6' }).toString();
       const response = await fetch(`/api/events?${queryParams}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      setEvents(data.events);
+      setEvents(data.events.slice(0, 6));
       setTotalPages(data.totalPages);
     } catch (error) {
       console.error('Error fetching events:', error);
@@ -35,7 +35,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    fetchEvents();
+    fetchEvents({ limit: 6 });
   }, [fetchEvents]);
 
   return (

@@ -1,25 +1,30 @@
 import nodemailer from 'nodemailer';
 
-// Utilisez ces variables d'environnement dans votre fichier .env
-const EMAIL_SERVER = process.env.EMAIL_SERVER;
-const EMAIL_FROM = process.env.EMAIL_FROM;
-
-let transporter = nodemailer.createTransport({
-    host: EMAIL_SERVER,
-    port: 587,
-    secure: false, // true for 465, false for other ports
+const transporter = nodemailer.createTransport({
+    host: process.env.EMAIL_HOST,
+    port: Number(process.env.EMAIL_PORT),
     auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
+        pass: process.env.EMAIL_PASS,
     },
 });
 
-export async function sendReservationConfirmationEmail(reservation: any) {
+export async function sendReservationConfirmation(to: string, eventTitle: string, tickets: number, totalAmount: number) {
     await transporter.sendMail({
-        from: EMAIL_FROM,
-        to: reservation.user.email,
+        from: '"Votre Service d\'Événements" <noreply@votreservice.com>',
+        to: to,
         subject: "Confirmation de réservation",
-        text: `Votre réservation pour ${reservation.event.title} a été confirmée.`,
-        html: `<b>Votre réservation pour ${reservation.event.title} a été confirmée.</b>`,
+        text: `Votre réservation pour ${eventTitle} (${tickets} ticket(s)) a été confirmée. Montant total : ${totalAmount}€`,
+        html: `<p>Votre réservation pour <strong>${eventTitle}</strong> (${tickets} ticket(s)) a été confirmée.</p><p>Montant total : ${totalAmount}€</p>`,
+    });
+}
+
+export async function sendReservationCancellation(to: string, eventTitle: string, tickets: number) {
+    await transporter.sendMail({
+        from: '"Votre Service d\'Événements" <noreply@votreservice.com>',
+        to: to,
+        subject: "Annulation de réservation",
+        text: `Votre réservation pour ${eventTitle} (${tickets} ticket(s)) a été annulée.`,
+        html: `<p>Votre réservation pour <strong>${eventTitle}</strong> (${tickets} ticket(s)) a été annulée.</p>`,
     });
 }

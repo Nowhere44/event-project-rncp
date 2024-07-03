@@ -1,19 +1,14 @@
+//app/payment/[reversationId]/page.tsx
 'use client';
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { loadStripe } from '@stripe/stripe-js';
 
-console.log('Public Key:', process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY);
-
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY as string);
-
-console.log(stripePromise);
-console.log('Public Key:', process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY);
-console.log('Secret Key:', process.env.STRIPE_SECRET_KEY);
 
 export default function PaymentPage({ params }: { params: { reservationId: string } }) {
     const [reservation, setReservation] = useState<any>(null);
+    const [existingRating, setExistingRating] = useState<any>(null);
     const router = useRouter();
 
     useEffect(() => {
@@ -22,6 +17,7 @@ export default function PaymentPage({ params }: { params: { reservationId: strin
             if (response.ok) {
                 const data = await response.json();
                 setReservation(data);
+                setExistingRating(data.existingRating);
             } else {
                 router.push('/');
             }
@@ -35,33 +31,49 @@ export default function PaymentPage({ params }: { params: { reservationId: strin
             console.error('Stripe not loaded');
             return;
         }
-        const response = await fetch('/api/create-checkout-session', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ reservationId: params.reservationId }),
-        });
-        const session = await response.json();
-        if (session.error) {
-            console.error('Error:', session.error);
-            return;
-        }
-        const result = await stripe.redirectToCheckout({
-            sessionId: session.id,
-        });
-        if (result.error) {
-            alert(result.error.message);
+
+        try {
+            const response = await fetch('/api/create-checkout-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reservationId: params.reservationId }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to create checkout session');
+            }
+
+            const session = await response.json();
+
+            const result = await stripe.redirectToCheckout({
+                sessionId: session.id,
+            });
+
+            if (result.error) {
+                throw new Error(result.error.message);
+            }
+        } catch (error) {
+            console.error('Payment error:', error);
+            alert('Une erreur est survenue lors du paiement. Veuillez réessayer.');
         }
     };
 
-    if (!reservation) return <div>Loading...</div>;
+    if (!reservation) return <div>Chargement...</div>;
 
     return (
         <div>
-            <h1>Payment for Reservation</h1>
-            <p>Event: {reservation.event.title}</p>
-            <p>Number of tickets: {reservation.numberOfTickets}</p>
-            <p>Total amount: ${reservation.totalAmount}</p>
-            <button onClick={handlePayment}>Pay with Stripe</button>
+            <h1>Paiement pour la réservation</h1>
+            <p>Événement : {reservation.event.title}</p>
+            <p>Nombre de tickets pour cette réservation : {reservation.numberOfTickets}</p>
+            <p>Montant à payer : €{Number(reservation.totalAmount).toFixed(2)}</p>
+            {existingRating && (
+                <div>
+                    <h2>Votre évaluation précédente pour cet événement :</h2>
+                    <p>Note : {existingRating.rating}/5</p>
+                    {existingRating.comment && <p>Commentaire : {existingRating.comment}</p>}
+                </div>
+            )}
+            <button onClick={handlePayment}>Payer avec Stripe</button>
         </div>
     );
 }
