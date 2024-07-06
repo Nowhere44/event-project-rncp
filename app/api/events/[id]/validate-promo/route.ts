@@ -1,8 +1,8 @@
-//api/events/[id]/validate-promo/route.ts
+// app/api/events/[id]/validate-promo/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/server/db';
 import { authOptions } from "@/auth.config";
 import { getServerSession } from 'next-auth/next';
+import { validatePromoCode } from '@/actions/promoCodes/validate';
 
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
@@ -13,31 +13,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
     try {
         const { promoCode } = await req.json();
-        const validPromoCode = await prisma.promoCode.findFirst({
-            where: {
-                eventId: params.id,
-                code: promoCode,
-                used: false,
-            },
-        });
-
-        if (validPromoCode) {
-            // Marquer le code comme utilisé
-            await prisma.promoCode.update({
-                where: { id: validPromoCode.id },
-                data: {
-                    used: true,
-                    usedById: session.user.id,
-                    usedAt: new Date(),
-                },
-            });
-
-            return NextResponse.json({ discount: validPromoCode.discount });
-        } else {
-            return NextResponse.json({ error: 'Code promo invalide ou déjà utilisé' }, { status: 400 });
-        }
+        const result = await validatePromoCode(params.id, promoCode);
+        return NextResponse.json(result);
     } catch (error) {
         console.error('Error validating promo code:', error);
-        return NextResponse.json({ error: 'Erreur lors de la validation du code promo' }, { status: 500 });
+        return NextResponse.json({ error: 'Erreur lors de la validation du code promo sa valeur ne peut pas être superieure à 100%' }, { status: 400 });
     }
 }

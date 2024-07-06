@@ -1,35 +1,17 @@
-// api/reservations/user/[id]/route.ts
+//api/reservations/user/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from "@/auth.config";
-import { prisma } from '@/server/db';
+import { getUserReservationsForEvent } from '@/actions/reservations/read';
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
     const session = await getServerSession(authOptions);
-    if (!session || !session.user) {
+    if (!session?.user) {
         return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
     try {
-        const reservations = await prisma.reservation.findMany({
-            where: {
-                userId: session.user.id,
-                eventId: params.id,
-                status: {
-                    in: ['Confirmed', 'Pending']
-                }
-            },
-            include: {
-                event: {
-                    select: {
-                        id: true,
-                        title: true,
-                        start_time: true,
-                    }
-                },
-            }
-        });
-
+        const reservations = await getUserReservationsForEvent(session.user.id, params.id);
         return NextResponse.json(reservations);
     } catch (error) {
         console.error('Error fetching user reservations:', error);

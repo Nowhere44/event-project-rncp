@@ -4,6 +4,7 @@ const { parse } = require("url");
 const next = require("next");
 const { Server } = require("socket.io");
 const { PrismaClient } = require("@prisma/client");
+const { type } = require("os");
 
 const prisma = new PrismaClient();
 const dev = process.env.NODE_ENV !== "production";
@@ -52,7 +53,7 @@ app.prepare().then(() => {
         const savedMessage = await prisma.message.create({
           data: {
             content: message.content,
-            type: message.type,
+            type: message.type || "public",
             userId: message.senderId,
           },
           include: {
@@ -69,6 +70,7 @@ app.prepare().then(() => {
           ...savedMessage,
           senderId: savedMessage.userId,
           sender: savedMessage.user,
+          type: savedMessage.type || "public",
         };
 
         io.emit("message", emittedMessage);

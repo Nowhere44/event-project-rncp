@@ -1,13 +1,14 @@
-// app/reservations/[id]/page.tsx
-
 'use client'
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { IReservation, IRating } from '@/types';
 import CommentForm from '@/components/CommentForm';
 import CancelReservationForm from '@/components/CancelReservationForm';
-import { format, differenceInHours, isBefore } from 'date-fns';
+import { format, differenceInHours } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { CalendarIcon, TicketIcon, CurrencyEuroIcon } from '@heroicons/react/24/outline'
 
 export default function ReservationDetailPage() {
     const params = useParams();
@@ -45,14 +46,12 @@ export default function ReservationDetailPage() {
     }, [fetchReservationAndRating]);
 
     const handleCommentSubmit = async (rating: number, comment: string) => {
-        if (!reservation || isEventPassed()) return;
+        if (!reservation) return;
 
         try {
             const response = await fetch(`/api/ratings/event/${reservation.eventId}`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ rating, comment }),
             });
 
@@ -69,25 +68,13 @@ export default function ReservationDetailPage() {
         }
     };
 
-    const handleEditClick = () => {
-        if (!isEventPassed()) {
-            setIsEditing(true);
-        }
-    };
-
-    const handleCancelEdit = () => {
-        setIsEditing(false);
-    };
-
     const handleUpdateRating = async (rating: number, comment: string) => {
-        if (!reservation || isEventPassed()) return;
+        if (!reservation) return;
 
         try {
             const response = await fetch(`/api/ratings/event/${reservation.eventId}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ rating, comment }),
             });
 
@@ -106,7 +93,7 @@ export default function ReservationDetailPage() {
     };
 
     const handleDeleteRating = async () => {
-        if (!reservation || isEventPassed()) return;
+        if (!reservation) return;
 
         try {
             const response = await fetch(`/api/ratings/event/${reservation.eventId}`, {
@@ -130,11 +117,6 @@ export default function ReservationDetailPage() {
         return format(new Date(date), "d MMMM yyyy 'à' HH:mm", { locale: fr });
     };
 
-    const isEventPassed = () => {
-        if (!reservation || !reservation.event) return true;
-        return isBefore(new Date(reservation.event.event_date), new Date());
-    };
-
     const canCancelReservation = () => {
         if (!reservation || !reservation.event) return false;
         const hoursDifference = differenceInHours(
@@ -147,51 +129,77 @@ export default function ReservationDetailPage() {
     if (error) return <div>Erreur: {error}</div>;
     if (!reservation) return <div>Chargement...</div>;
 
-    console.log('Reservation:', reservation);
-
     return (
         <div className="container mx-auto px-4 py-8">
             <h1 className="text-3xl font-bold mb-6">Détails de la Réservation</h1>
-            <div className="bg-white shadow-md rounded-lg p-6 mb-6">
-                <h2 className="text-2xl font-semibold mb-4">{reservation?.event?.title}</h2>
-                <p>Date : {formatDate(reservation?.event?.event_date)}</p>
-                <p>Nombre de tickets : {reservation?.numberOfTickets}</p>
-                <p>Total : {Number(reservation?.totalAmount || 0).toFixed(2)} €</p>
-                {canCancelReservation() && (
-                    <CancelReservationForm
-                        reservationId={reservation?.id || ''}
-                        totalTickets={reservation?.numberOfTickets || 0}
-                        onCancel={fetchReservationAndRating}
-                        eventDate={new Date(reservation?.event?.event_date || '')}
-                    />
-                )}
-            </div>
-            <div className="bg-white shadow-md rounded-lg p-6">
-                <h3 className="text-xl font-semibold mb-4">Votre avis</h3>
-                {isEventPassed() ? (
-                    userRating ? (
-                        <div>
-                            <p>Votre note : {userRating.rating}/5</p>
-                            <p>Votre commentaire : {userRating.comment}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="mb-6">
+                    <CardHeader>
+                        <CardTitle className="flex items-center">
+                            <CalendarIcon className="w-6 h-6 mr-2" />
+                            {reservation?.event?.title}
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {reservation?.event?.imageUrl && (
+                            <img
+                                src={reservation.event.imageUrl}
+                                alt={reservation.event.title}
+                                className="w-full h-48 object-cover rounded-md mb-4"
+                            />
+                        )}
+                        <div className="space-y-2">
+                            <p className="flex items-center">
+                                <CalendarIcon className="w-5 h-5 mr-2" />
+                                {formatDate(reservation?.event?.event_date)}
+                            </p>
+                            <p className="flex items-center">
+                                <TicketIcon className="w-5 h-5 mr-2" />
+                                {reservation?.numberOfTickets} ticket(s)
+                            </p>
+                            <p className="flex items-center">
+                                <CurrencyEuroIcon className="w-5 h-5 mr-2" />
+                                {Number(reservation?.totalAmount || 0).toFixed(2)} €
+                            </p>
                         </div>
-                    ) : (
-                        <p>L'événement est terminé. Vous ne pouvez plus laisser d'avis.</p>
-                    )
-                ) : userRating && !isEditing ? (
-                    <div>
-                        <p>Votre note : {userRating.rating}/5</p>
-                        <p>Votre commentaire : {userRating.comment}</p>
-                        <button onClick={handleEditClick}>Modifier</button>
-                        <button onClick={handleDeleteRating}>Supprimer</button>
-                    </div>
-                ) : (
-                    <CommentForm
-                        onSubmit={isEditing ? handleUpdateRating : handleCommentSubmit}
-                        initialRating={userRating?.rating}
-                        initialComment={userRating?.comment}
-                        onCancel={isEditing ? handleCancelEdit : undefined}
-                    />
-                )}
+                    </CardContent>
+                    <CardFooter>
+                        {canCancelReservation() && (
+                            <CancelReservationForm
+                                reservationId={reservation?.id || ''}
+                                totalTickets={reservation?.numberOfTickets || 0}
+                                onCancel={fetchReservationAndRating}
+                                eventDate={new Date(reservation?.event?.event_date || '')}
+                            />
+                        )}
+                    </CardFooter>
+                </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Votre avis</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {userRating && !isEditing ? (
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <p><span className="font-medium">Votre note :</span> {userRating.rating}/5</p>
+                                    <p><span className="font-medium">Votre commentaire :</span> {userRating.comment}</p>
+                                </div>
+                                <div className="space-x-2">
+                                    <Button onClick={() => setIsEditing(true)}>Modifier</Button>
+                                    <Button variant="destructive" onClick={handleDeleteRating}>Supprimer</Button>
+                                </div>
+                            </div>
+                        ) : (
+                            <CommentForm
+                                onSubmit={isEditing ? handleUpdateRating : handleCommentSubmit}
+                                initialRating={userRating?.rating}
+                                initialComment={userRating?.comment}
+                                onCancel={isEditing ? () => setIsEditing(false) : undefined}
+                            />
+                        )}
+                    </CardContent>
+                </Card>
             </div>
         </div>
     );

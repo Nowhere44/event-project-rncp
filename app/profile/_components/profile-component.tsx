@@ -1,9 +1,15 @@
+// app/profile/_components/profile-component.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { IUser } from '@/types';
+import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface ProfileComponentProps {
     userId: string;
@@ -32,26 +38,15 @@ export default function ProfileComponent({ userId, userData }: ProfileComponentP
         }
     }, [userData]);
 
-    if (status === 'loading') {
-        return <div className="flex justify-center items-center h-screen">Chargement...</div>;
-    }
-
-    if (status === 'unauthenticated') {
-        router.push('/login');
+    if (status === 'loading' || !session?.user || !userData) {
         return null;
     }
 
-    if (!session?.user) {
-        return null;
-    }
-
-    const handleEdit = () => {
-        setIsEditing(true);
-    }
+    const handleEdit = () => setIsEditing(true);
 
     const handleSave = async () => {
         try {
-            const response = await fetch(`/api/user/${userId}`, {
+            const response = await fetch(`/api/users/${userId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(editedUserData),
@@ -82,7 +77,7 @@ export default function ProfileComponent({ userId, userData }: ProfileComponentP
     const handleDelete = async () => {
         if (window.confirm('Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.')) {
             try {
-                const response = await fetch(`/api/user/${userId}`, { method: 'DELETE' });
+                const response = await fetch(`/api/users/${userId}`, { method: 'DELETE' });
                 if (response.ok) {
                     await signOut({ callbackUrl: '/' });
                 } else {
@@ -94,60 +89,75 @@ export default function ProfileComponent({ userId, userData }: ProfileComponentP
         }
     };
 
-    if (!session?.user || !userData) {
-        return null;
-    }
-
-    console.log('userData:', userData);
-
     return (
-        <div className="bg-white shadow-lg rounded-lg p-6 md:p-8 lg:p-12 max-w-3xl mx-auto mt-12">
-            <h1 className="text-4xl font-bold mb-6 text-center text-gray-800">Profil de {session.user.firstName}</h1>
-            <div className="flex flex-col items-center">
-                <div className="w-32 h-32 mb-4">
-                    {session.user.image && (
-                        <img src={session.user.image} alt="Profile" className="w-32 h-32 rounded-full object-cover shadow-md" />
-                    )}
-                </div>
+        <Card className="w-full max-w-sm mx-auto">
+            <CardContent className="flex flex-col items-center pt-6">
+                <Avatar className="w-24 h-24 border-4 border-white z-10 mb-4">
+                    <AvatarImage src={session.user.image || ""} alt="Profile" />
+                    <AvatarFallback>{session.user.firstName?.[0]}{session.user.lastName?.[0]}</AvatarFallback>
+                </Avatar>
                 {isEditing ? (
-                    <div className="space-y-4 w-full">
-                        {['firstName', 'lastName', 'email', 'image'].map((field) => (
-                            <input
-                                key={field}
-                                type={field === 'email' ? 'email' : 'text'}
-                                value={editedUserData[field as keyof typeof editedUserData]}
-                                onChange={(e) => setEditedUserData({ ...editedUserData, [field]: e.target.value })}
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
+                    <Input
+                        type="text"
+                        value={editedUserData.image}
+                        onChange={(e) => setEditedUserData({ ...editedUserData, image: e.target.value })}
+                        placeholder="URL de l'image"
+                        className="mb-2"
+                    />
+                ) : null}
+                <h2 className="text-2xl font-bold text-center">
+                    {isEditing ? (
+                        <div className="flex gap-2">
+                            <Input
+                                type="text"
+                                value={editedUserData.firstName}
+                                onChange={(e) => setEditedUserData({ ...editedUserData, firstName: e.target.value })}
+                                placeholder="Prénom"
                             />
-                        ))}
-                        <button onClick={handleSave} className="w-full py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-300">
-                            Sauvegarder
-                        </button>
-                    </div>
-                ) : (
-                    <div className="space-y-4 text-center w-full">
-                        {['lastName', 'firstName', 'email'].map((field) => (
-                            <p key={field} className="text-xl">
-                                <strong>{field.charAt(0).toUpperCase() + field.slice(1)}:</strong> {session.user[field as keyof typeof session.user]}
-                            </p>
-                        ))}
-                        {userData && userData.totalRevenue && Number(userData.totalRevenue) > 0 && (
-                            <p className="text-xl"><strong>Revenu total:</strong> {Number(userData.totalRevenue).toFixed(2)} €</p>
-                        )}
-                    </div>
-                )}
-                <div className="mt-8 flex justify-center space-x-4 w-full">
-                    {!isEditing && (
-                        <button onClick={handleEdit} className="py-3 px-6 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-300">
-                            Modifier le profil
-                        </button>
+                            <Input
+                                type="text"
+                                value={editedUserData.lastName}
+                                onChange={(e) => setEditedUserData({ ...editedUserData, lastName: e.target.value })}
+                                placeholder="Nom"
+                            />
+                        </div>
+                    ) : (
+                        `${session.user.firstName} ${session.user.lastName}`
                     )}
-                    <button onClick={handleDelete} className="py-3 px-6 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-300">
-                        Supprimer le compte
-                    </button>
+                </h2>
+                <p className="text-gray-600 text-center">{userData.role || 'Utilisateur'}</p>
+
+                {isEditing ? (
+                    <Input
+                        type="email"
+                        value={editedUserData.email}
+                        onChange={(e) => setEditedUserData({ ...editedUserData, email: e.target.value })}
+                        placeholder="Email"
+                        className="mt-2"
+                    />
+                ) : (
+                    <p className="text-gray-600 text-center">{session.user.email}</p>
+                )}
+
+                {userData && userData.totalRevenue && Number(userData.totalRevenue) > 0 && (
+                    <p className="mt-4 font-semibold">Revenu total: {Number(userData.totalRevenue).toFixed(2)} €</p>
+                )}
+
+                <div className="flex space-x-2 w-full mt-6">
+                    {isEditing ? (
+                        <Button onClick={handleSave} className="flex-1">Sauvegarder</Button>
+                    ) : (
+                        <Button onClick={handleEdit} className="flex-1">
+                            <PencilIcon className="h-5 w-5 mr-2" />
+                            Modifier
+                        </Button>
+                    )}
+                    <Button onClick={handleDelete} variant="destructive" className="flex-1">
+                        <TrashIcon className="h-5 w-5 mr-2" />
+                        Supprimer
+                    </Button>
                 </div>
-            </div>
-        </div>
+            </CardContent>
+        </Card>
     );
 }

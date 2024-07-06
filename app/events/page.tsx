@@ -1,9 +1,10 @@
 'use client';
-
 import { useState, useEffect, useCallback } from 'react';
 import EventList from "./_components/event-list"
 import { IEvent } from '@/types'
 import SearchFilter from './_components/search-filter'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 
 
 export default function Events() {
@@ -36,26 +37,38 @@ export default function Events() {
     }, [fetchEvents]);
 
     return (
-        <div className="container mx-auto px-4">
-            <h1 className="text-3xl font-bold my-8">Tous les événements</h1>
-            <SearchFilter onFilterChange={fetchEvents} />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 my-8">
-                <div>
-                    {isLoading ? (
-                        <p>Chargement des événements...</p>
-                    ) : (
-                        <EventList
-                            data={events}
-                            emptyTitle="Aucun événement trouvé"
-                            emptyStateSubtext="Revenez plus tard pour voir de nouveaux événements"
-                            collectionType="All_Events"
-                            limit={10}
-                            page={1}
-                            totalPages={totalPages}
-                            urlParamName="page"
-                        />
-                    )}
-                </div>
+        <div className="container mx-auto h-full px-4 py-8">
+            <Card className="mb-8">
+                <CardHeader>
+                    <CardTitle>Rechercher des événements</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <SearchFilter onFilterChange={fetchEvents} />
+                </CardContent>
+            </Card>
+
+            <div>
+                <CardHeader>
+                    <CardTitle>Tous les événements</CardTitle>
+                </CardHeader>
+                {isLoading ? (
+                    <div className="space-y-4">
+                        {[...Array(3)].map((_, i) => (
+                            <Skeleton key={i} className="h-[200px] w-full" />
+                        ))}
+                    </div>
+                ) : (
+                    <EventList
+                        data={events}
+                        emptyTitle="Aucun événement trouvé"
+                        emptyStateSubtext="Revenez plus tard pour voir de nouveaux événements"
+                        collectionType="All_Events"
+                        limit={10}
+                        page={1}
+                        totalPages={totalPages}
+                        urlParamName="page"
+                    />
+                )}
             </div>
         </div>
     )

@@ -1,5 +1,6 @@
+// ReadOnlyRatingStars.tsx
 import React from 'react';
-import { Star } from 'lucide-react';
+import { StarIcon } from '@heroicons/react/20/solid';
 
 interface ReadOnlyRatingStarsProps {
     rating: number;
@@ -8,10 +9,12 @@ interface ReadOnlyRatingStarsProps {
 const ReadOnlyRatingStars: React.FC<ReadOnlyRatingStarsProps> = ({ rating }) => {
     return (
         <div className="flex items-center">
-            {[1, 2, 3, 4, 5].map((star) => (
-                <Star
+            {[0, 1, 2, 3, 4].map((star) => (
+                <StarIcon
                     key={star}
-                    className={`${star <= rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+                    className={`${star < Math.round(rating) ? 'text-yellow-400' : 'text-gray-200'
+                        } h-5 w-5 flex-shrink-0`}
+                    aria-hidden="true"
                 />
             ))}
         </div>

@@ -1,15 +1,20 @@
-import RegisterForm from './_components/registration-form';
+import Image from "next/image";
+import RegisterForm from './_components/register-form';
 
 export default function RegisterPage() {
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-md w-full space-y-8">
-                <div>
-                    <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                        Créer un compte
-                    </h2>
-                </div>
+        <div className="w-full lg:grid lg:grid-cols-2 h-full">
+            <div className="flex items-center justify-center py-12">
                 <RegisterForm />
+            </div>
+            <div className="hidden bg-muted lg:block">
+                <Image
+                    src="https://images.unsplash.com/photo-1507878866276-a947ef722fee?q=80&w=2071&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                    alt="Image"
+                    width="1920"
+                    height="1080"
+                    className="h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
+                />
             </div>
         </div>
     );

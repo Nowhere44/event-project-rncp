@@ -8,7 +8,6 @@ interface PromoCode {
     code: string;
     discount: number;
     used: boolean;
-    usedBy?: string;
     usedAt?: string;
     usedByUser?: {
         first_name: string;
@@ -36,7 +35,7 @@ const PromoCodeGenerator: React.FC<PromoCodeGeneratorProps> = ({ eventId }) => {
             });
             if (response.ok) {
                 const data = await response.json();
-                setGeneratedCodes(data.promoCodes);
+                setGeneratedCodes(prevCodes => [...prevCodes, ...data.promoCodes]);
             } else {
                 throw new Error('Échec de la génération des codes promo');
             }
@@ -65,47 +64,61 @@ const PromoCodeGenerator: React.FC<PromoCodeGeneratorProps> = ({ eventId }) => {
     }, [eventId]);
 
     return (
-        <div className="mt-4">
-            <h3 className="text-xl font-semibold mb-2">Générer des codes promo</h3>
-            <div className="flex items-center gap-4 mb-4">
-                <input
-                    type="number"
-                    min="1"
-                    value={promoQuantity}
-                    onChange={(e) => setPromoQuantity(parseInt(e.target.value))}
-                    className="border rounded px-2 py-1 w-20"
-                    placeholder="Quantité"
-                />
-                <input
-                    type="number"
-                    min="5"
-                    max="50"
-                    value={promoDiscount}
-                    onChange={(e) => setPromoDiscount(parseInt(e.target.value))}
-                    className="border rounded px-2 py-1 w-20"
-                    placeholder="Réduction %"
-                />
-                <Button onClick={handleGeneratePromoCodes} disabled={isLoading}>
-                    {isLoading ? 'Génération...' : 'Générer'}
+        <div>
+            <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">Générer des codes promo</h3>
+            <div className="space-y-4">
+                <div>
+                    <label htmlFor="promoQuantity" className="block text-sm font-medium text-gray-700">
+                        Nombre de codes
+                    </label>
+                    <input
+                        type="number"
+                        id="promoQuantity"
+                        min="1"
+                        value={promoQuantity}
+                        onChange={(e) => setPromoQuantity(parseInt(e.target.value))}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        placeholder="Quantité de codes à générer"
+                    />
+                </div>
+                <div>
+                    <label htmlFor="promoDiscount" className="block text-sm font-medium text-gray-700">
+                        Réduction (%)
+                    </label>
+                    <input
+                        type="number"
+                        id="promoDiscount"
+                        min="5"
+                        max="50"
+                        value={promoDiscount}
+                        onChange={(e) => setPromoDiscount(parseInt(e.target.value))}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        placeholder="Pourcentage de réduction"
+                    />
+                </div>
+                <Button
+                    onClick={handleGeneratePromoCodes}
+                    disabled={isLoading}
+                    className="w-full justify-center"
+                >
+                    {isLoading ? 'Génération...' : 'Générer les codes'}
                 </Button>
             </div>
             {generatedCodes.length > 0 && (
-                <div>
-                    <h4 className="text-lg font-semibold mb-2">Codes générés :</h4>
-                    <ul className="list-disc pl-5">
+                <div className="mt-6">
+                    <h4 className="text-sm font-medium text-gray-900 mb-2">Codes générés :</h4>
+                    <ul className="divide-y divide-gray-200">
                         {generatedCodes.map((code) => (
-                            <li key={code.id} className={code.used ? 'line-through text-gray-500' : ''}>
-                                {code.code} - {code.discount}% de réduction
-                                {code.used && code.usedBy && (
-                                    <span className="ml-2 text-sm text-gray-500">
-                                        (Utilisé par {code.usedBy}
-                                        {code.usedAt && ` le ${new Date(code.usedAt).toLocaleDateString()}`})
-                                        {code.used && code.usedByUser && (
-                                            <span className="ml-2 text-sm text-gray-500">
-                                                (Utilisé par {code.usedByUser.first_name} {code.usedByUser.last_name})
-                                            </span>
-                                        )}
-                                    </span>
+                            <li key={code.id} className={`py-3 ${code.used ? 'text-gray-500' : ''}`}>
+                                <div className="flex justify-between">
+                                    <span className="font-medium">{code.code}</span>
+                                    <span>{code.discount}% de réduction</span>
+                                </div>
+                                {code.used && (
+                                    <div className="mt-1 text-xs">
+                                        Utilisé par {code.usedByUser?.first_name} {code.usedByUser?.last_name}
+                                        {code.usedAt && ` le ${new Date(code.usedAt).toLocaleString('fr-FR')}`}
+                                    </div>
                                 )}
                             </li>
                         ))}

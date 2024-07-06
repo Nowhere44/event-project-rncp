@@ -2,11 +2,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from "@/auth.config";
-import { prisma } from '@/server/db';
+import { getUserEvents } from '@/actions';
 
 export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions);
-    if (!session || !session.user) {
+    if (!session?.user) {
         return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
@@ -17,28 +17,7 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-        const events = await prisma.event.findMany({
-            where: { userId },
-            include: {
-                tags: {
-                    include: {
-                        tag: true
-                    }
-                },
-                reservations: {
-                    include: {
-                        user: {
-                            select: {
-                                id: true,
-                                first_name: true,
-                                last_name: true
-                            }
-                        }
-                    }
-                }
-            }
-        });
-
+        const events = await getUserEvents(userId);
         return NextResponse.json(events);
     } catch (error) {
         console.error('Error fetching user events:', error);

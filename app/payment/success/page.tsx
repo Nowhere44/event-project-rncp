@@ -4,6 +4,11 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { verifyPayment } from '@/actions/payment';
 import Link from 'next/link';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { CheckCircleIcon, TicketIcon, CalendarIcon, CurrencyEuroIcon, TagIcon } from '@heroicons/react/24/outline'
+
 
 export default function PaymentSuccessPage() {
     const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -35,28 +40,63 @@ export default function PaymentSuccessPage() {
     }
 
     if (status === 'loading') {
-        return <div>Vérification du paiement en cours...</div>;
+        return <div className="flex justify-center items-center h-screen">Vérification du paiement en cours...</div>;
     }
 
     if (status === 'error') {
-        return <div>Une erreur est survenue lors de la confirmation de votre paiement.</div>;
+        return (
+            <div className="container mx-auto py-8 text-center">
+                <Card>
+                    <CardContent className="pt-6">
+                        <h1 className="text-2xl font-bold text-red-600 mb-4">Erreur de paiement</h1>
+                        <p>Une erreur est survenue lors de la confirmation de votre paiement.</p>
+                    </CardContent>
+                </Card>
+            </div>
+        );
     }
 
     return (
-        <div className="container mx-auto py-8">
-            <h1 className="text-3xl font-bold mb-4">Paiement réussi</h1>
-            <p className="mb-4">Votre réservation pour l'événement "{eventDetails.title}" a été confirmée.</p>
-            <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <p><strong>Nombre de tickets :</strong> {eventDetails.numberOfTickets}</p>
-                <p><strong>Montant total payé :</strong> {Number(eventDetails.totalAmount).toFixed(2)} €</p>
-                {eventDetails.appliedPromoCode && (
-                    <p><strong>Code promo appliqué :</strong> {eventDetails.appliedPromoCode} ({eventDetails.discount}% de réduction)</p>
-                )}
-                <p><strong>Date de l'événement :</strong> {new Date(eventDetails.eventDate).toLocaleDateString()}</p>
-            </div>
-            <Link href={`/events/${eventDetails.eventId}`} className="text-blue-500 hover:underline">
-                Voir les détails de l'événement
-            </Link>
+        <div className="h-full flex items-center justify-center">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center text-green-600">
+                        <CheckCircleIcon className="w-8 h-8 mr-2" />
+                        Paiement réussi
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p className="mb-4">Votre réservation pour l'événement "{eventDetails.title}" a été confirmée.</p>
+                    <div className="space-y-2">
+                        <p className="flex items-center">
+                            <TicketIcon className="w-5 h-5 mr-2" />
+                            <span className="font-medium">Nombre de tickets :</span> {eventDetails.numberOfTickets}
+                        </p>
+                        <p className="flex items-center">
+                            <CurrencyEuroIcon className="w-5 h-5 mr-2" />
+                            <span className="font-medium">Montant total payé :</span> {Number(eventDetails.totalAmount).toFixed(2)} €
+                        </p>
+                        {eventDetails.appliedPromoCode && (
+                            <p className="flex items-center">
+                                <TagIcon className="w-5 h-5 mr-2" />
+                                <span className="font-medium">Code promo appliqué :</span>
+                                <Badge variant="secondary" className="ml-2">
+                                    {eventDetails.appliedPromoCode} ({eventDetails.discount}% de réduction)
+                                </Badge>
+                            </p>
+                        )}
+                        <p className="flex items-center">
+                            <CalendarIcon className="w-5 h-5 mr-2" />
+                            <span className="font-medium">Date de l'événement :</span> {new Date(eventDetails.eventDate).toLocaleDateString()}
+                        </p>
+                    </div>
+                </CardContent>
+                <CardFooter>
+                    <Link href={`/events/${eventDetails.eventId}`}>
+                        <Button>Voir les détails de l'événement</Button>
+                    </Link>
+                </CardFooter>
+            </Card>
         </div>
     );
 }

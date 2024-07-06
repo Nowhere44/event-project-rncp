@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import InteractiveRatingStars from './shared/InteractiveRatingStars';
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
 
 interface CommentFormProps {
     onSubmit: (rating: number, comment: string) => void;
@@ -22,36 +25,26 @@ const CommentForm: React.FC<CommentFormProps> = ({ onSubmit, initialRating = 0, 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-                <label className="block text-sm font-medium text-gray-700">Note</label>
+                <Label htmlFor="rating">Note</Label>
                 <InteractiveRatingStars rating={rating} onRatingChange={setRating} />
             </div>
             <div>
-                <label htmlFor="comment" className="block text-sm font-medium text-gray-700">
-                    Commentaire
-                </label>
-                <textarea
+                <Label htmlFor="comment">Commentaire</Label>
+                <Textarea
                     id="comment"
                     rows={4}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
-                ></textarea>
+                />
             </div>
             <div className="flex justify-between">
-                <button
-                    type="submit"
-                    className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                >
+                <Button type="submit">
                     Soumettre
-                </button>
+                </Button>
                 {onCancel && (
-                    <button
-                        type="button"
-                        onClick={onCancel}
-                        className="inline-flex justify-center rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                    >
+                    <Button type="button" variant="outline" onClick={onCancel}>
                         Annuler
-                    </button>
+                    </Button>
                 )}
             </div>
         </form>

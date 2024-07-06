@@ -1,8 +1,8 @@
-// /api/events/route.ts
+// app/api/events/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from "@/auth.config";
-import { createEvent, getEvents } from '@/actions/event';
+import { createEvent, getEvents } from '@/actions';
 
 export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions);
@@ -12,9 +12,7 @@ export async function POST(req: NextRequest) {
 
     try {
         const eventData = await req.json();
-        console.log('Received event data:', eventData);
         const event = await createEvent(eventData, session.user.id);
-        console.log('Created event:', event);
         return NextResponse.json(event, { status: 201 });
     } catch (error) {
         console.error('Error creating event:', error);
@@ -26,20 +24,13 @@ export async function POST(req: NextRequest) {
 
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
-    const query = searchParams.get('search');
-    const tags = searchParams.get('category');
-    const date = searchParams.get('date');
-    const isPaid = searchParams.get('isPaid');
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
-
-    const params: any = {
-        page,
-        limit,
-        search: query || undefined,
-        category: tags || undefined,
-        isPaid: isPaid === 'true' ? true : isPaid === 'false' ? false : undefined,
-        date: date ? new Date(date) : undefined
+    const params = {
+        search: searchParams.get('search') || undefined,
+        category: searchParams.get('category') || undefined,
+        isPaid: searchParams.get('isPaid') === 'true' ? true : searchParams.get('isPaid') === 'false' ? false : undefined,
+        date: searchParams.get('date') ? new Date(searchParams.get('date')!) : undefined,
+        page: parseInt(searchParams.get('page') || '1'),
+        limit: parseInt(searchParams.get('limit') || '10')
     };
 
     try {

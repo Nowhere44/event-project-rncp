@@ -1,59 +1,67 @@
 // app/api/users/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
+import { updateUser } from '@/actions/users/update';
+import { deleteUser } from '@/actions/users/delete';
+import { getServerSession } from "next-auth/next";
+import { getUserById } from '@/actions/users/read';
 import { authOptions } from "@/auth.config";
-import { prisma } from '@/server/db';
+import { revalidatePath } from "next/cache";
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
     const session = await getServerSession(authOptions);
-    if (!session || !session.user) {
-        return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    if (!session || !session.user || session.user.id !== params.id) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     try {
-        const user = await prisma.user.findUnique({
-            where: { id: params.id },
-            select: {
-                id: true,
-                first_name: true,
-                last_name: true,
-                email: true,
-                profile_picture: true,
-                role: true,
-                totalRevenue: true,
-                events: {
-                    where: {
-                        is_paid: true
-                    },
-                    include: {
-                        reservations: {
-                            where: {
-                                status: 'Confirmed'
-                            }
-                        }
-                    }
-                }
-            }
+        const body = await req.json();
+        const updatedUser = await updateUser(params.id, {
+            first_name: body.firstName,
+            last_name: body.lastName,
+            email: body.email,
+            profile_picture: body.image,
         });
+        revalidatePath(`/profile/${params.id}`);
+        return NextResponse.json(updatedUser, { status: 200 });
+    } catch (error) {
+        console.error("Error updating user:", error);
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    }
+}
 
-        if (!user) {
-            return NextResponse.json({ error: 'Utilisateur non trouvé' }, { status: 404 });
-        }
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user || session.user.id !== params.id) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-        // Si l'utilisateur demande ses propres informations, renvoyer toutes les données
-        // Sinon, omettre les informations sensibles comme le revenu total
-        if (session.user.id === user.id) {
-            const hasReservations = user.events.some(event => event.reservations.length > 0);
-            return NextResponse.json({
-                ...user,
-                hasReservations
-            });
+    try {
+        const success = await deleteUser(params.id);
+        if (success) {
+            return NextResponse.json({ message: "User deleted successfully" }, { status: 200 });
         } else {
-            const { totalRevenue, events, ...publicUserInfo } = user;
-            return NextResponse.json(publicUserInfo);
+            return NextResponse.json({ error: "Failed to delete user" }, { status: 400 });
         }
     } catch (error) {
-        console.error('Error fetching user:', error);
-        return NextResponse.json({ error: 'Erreur lors de la récupération de l\'utilisateur' }, { status: 500 });
+        console.error("Error deleting user:", error);
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    }
+}
+
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user || session.user.id !== params.id) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    try {
+        const user = await getUserById(params.id);
+        if (!user) {
+            return NextResponse.json({ error: "User not found" }, { status: 404 });
+        }
+        return NextResponse.json(user, { status: 200 });
+    } catch (error) {
+        console.error("Error fetching user:", error);
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

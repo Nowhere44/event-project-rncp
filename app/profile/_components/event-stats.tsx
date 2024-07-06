@@ -1,7 +1,9 @@
+// app/profile/_components/event-stats.tsx
 'use client';
 import { IEvent } from '@/types';
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
+import { useState, useEffect } from 'react';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -10,22 +12,28 @@ type EventStatsProps = {
 };
 
 const EventStats = ({ events }: EventStatsProps) => {
-    const eventRevenues = events.map(event => {
-        const revenue = event.reservations.reduce((sum, res) => sum + Number(res.totalAmount), 0);
-        return {
-            title: event.title,
-            revenue: revenue
-        };
-    }).sort((a, b) => b.revenue - a.revenue);
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    const eventRevenues = events.map(event => ({
+        title: event.title,
+        revenue: event.reservations.reduce((sum, res) => sum + Number(res.totalAmount), 0)
+    })).sort((a, b) => b.revenue - a.revenue);
 
     const data = {
-        labels: eventRevenues.map(event => event.title),
+        labels: eventRevenues.map(event => isMobile ? event.title.substring(0, 10) + '...' : event.title),
         datasets: [
             {
-                label: 'Revenus par événement',
+                label: 'Revenus (€)',
                 data: eventRevenues.map(event => event.revenue),
-                backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                borderColor: 'rgba(59, 130, 246, 1)',
                 borderWidth: 1,
             },
         ],
@@ -33,32 +41,61 @@ const EventStats = ({ events }: EventStatsProps) => {
 
     const options = {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: {
             legend: {
+                display: !isMobile,
                 position: 'top' as const,
+                labels: {
+                    color: '#4B5563',
+                    font: {
+                        size: isMobile ? 10 : 12,
+                    },
+                },
             },
             title: {
                 display: true,
                 text: 'Revenus par événement',
+                color: '#1F2937',
+                font: {
+                    size: isMobile ? 14 : 16,
+                    weight: 'bold' as const,
+                }
             },
         },
         scales: {
             y: {
                 beginAtZero: true,
                 title: {
-                    display: true,
-                    text: 'Revenus (€)'
-                }
-            }
-        }
+                    display: !isMobile,
+                    text: 'Revenus (€)',
+                    color: '#4B5563',
+                },
+                ticks: {
+                    color: '#4B5563',
+                    font: {
+                        size: isMobile ? 10 : 12,
+                    },
+                },
+            },
+            x: {
+                ticks: {
+                    color: '#4B5563',
+                    font: {
+                        size: isMobile ? 8 : 10,
+                    },
+                    maxRotation: 90,
+                    minRotation: 90,
+                },
+            },
+        },
     };
 
     return (
-        <div className="mt-8">
-            <h2 className="text-2xl font-bold mb-4">Statistiques des événements</h2>
+        <div style={{ height: isMobile ? '300px' : '400px' }}>
             <Bar options={options} data={data} />
         </div>
     );
-};
+}
 
 export default EventStats;

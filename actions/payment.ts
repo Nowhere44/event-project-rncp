@@ -2,7 +2,7 @@
 'use server'
 import { prisma } from "@/server/db";
 import { ReservationStatus, PaymentStatus } from "@prisma/client";
-import { updateUserTotalRevenue } from "./user";
+import { updateUserTotalRevenue } from "@/actions/users/update";
 import Stripe from 'stripe';
 import { Prisma } from '@prisma/client';
 import { sendReservationConfirmation } from '@/lib/email';
@@ -15,7 +15,8 @@ export async function verifyPayment(sessionId: string) {
     try {
         const session = await stripe.checkout.sessions.retrieve(sessionId);
         if (session.payment_status === 'paid') {
-            const reservation = await prisma.reservation.findUnique({
+            // Vérifier si une réservation existe déjà avec ce stripeSessionId
+            let reservation = await prisma.reservation.findUnique({
                 where: { stripeSessionId: sessionId },
                 include: {
                     event: true,
@@ -24,57 +25,70 @@ export async function verifyPayment(sessionId: string) {
             });
 
             if (!reservation) {
-                console.error('Réservation non trouvée pour la session:', sessionId);
-                return { success: false };
+                // Si la réservation n'existe pas, la créer
+                reservation = await prisma.reservation.create({
+                    data: {
+                        eventId: session.metadata!.eventId,
+                        userId: session.metadata!.userId,
+                        numberOfTickets: parseInt(session.metadata!.numberOfTickets),
+                        totalAmount: new Prisma.Decimal(session.metadata!.totalAmount),
+                        status: ReservationStatus.Confirmed,
+                        appliedPromoCode: session.metadata!.appliedPromoCode || null,
+                        stripeSessionId: session.id,
+                    },
+                    include: {
+                        event: true,
+                        user: true
+                    }
+                });
+            } else if (reservation.status !== ReservationStatus.Confirmed) {
+                // Si la réservation existe mais n'est pas confirmée, la mettre à jour
+                reservation = await prisma.reservation.update({
+                    where: { id: reservation.id },
+                    data: { status: ReservationStatus.Confirmed },
+                    include: {
+                        event: true,
+                        user: true
+                    }
+                });
             }
 
-            const totalAmount = new Prisma.Decimal(session.metadata?.totalAmount || (session.amount_total! / 100).toFixed(2));
-
-            const updatedReservation = await prisma.reservation.update({
-                where: { id: reservation.id },
-                data: {
-                    status: ReservationStatus.Confirmed,
-                    totalAmount: totalAmount,
-                },
-                include: {
-                    event: true,
-                    user: true
-                }
-            });
-
-            if (updatedReservation.appliedPromoCode) {
-                await prisma.promoCode.update({
+            // Mise à jour du code promo
+            if (reservation.appliedPromoCode) {
+                await prisma.promoCode.updateMany({
                     where: {
-                        code: updatedReservation.appliedPromoCode,
-                        eventId: updatedReservation.eventId
+                        eventId: reservation.eventId,
+                        code: reservation.appliedPromoCode,
+                        used: false,
                     },
                     data: {
                         used: true,
-                        usedById: updatedReservation.userId,
+                        usedById: reservation.userId,
                         usedAt: new Date()
                     }
                 });
             }
 
-            if (updatedReservation) {
+            // Envoi de la confirmation
+            if (reservation) {
                 await sendReservationConfirmation(
-                    updatedReservation.user.email,
-                    updatedReservation.event.title,
-                    updatedReservation.numberOfTickets,
-                    Number(updatedReservation.totalAmount)
+                    reservation.user.email,
+                    reservation.event.title,
+                    reservation.numberOfTickets,
+                    Number(reservation.totalAmount)
                 );
             }
 
             // Vérifier si un paiement existe déjà pour cette réservation
-            const existingPayment = await prisma.payment.findUnique({
-                where: { reservationId: updatedReservation.id }
+            let payment = await prisma.payment.findUnique({
+                where: { reservationId: reservation.id }
             });
 
-            if (!existingPayment) {
-                // Créer un nouveau paiement seulement s'il n'existe pas déjà
-                await prisma.payment.create({
+            if (!payment) {
+                // Créer le paiement seulement s'il n'existe pas déjà
+                payment = await prisma.payment.create({
                     data: {
-                        reservationId: updatedReservation.id,
+                        reservationId: reservation.id,
                         amount: new Prisma.Decimal((session.amount_total! / 100).toFixed(2)),
                         paymentDate: new Date(),
                         paymentMethod: 'Stripe',
@@ -83,20 +97,19 @@ export async function verifyPayment(sessionId: string) {
                 });
             }
 
-            if (updatedReservation.event) {
-                await updateUserTotalRevenue(updatedReservation.event.userId);
+            if (reservation.event) {
+                await updateUserTotalRevenue(reservation.event.userId);
             }
 
             return {
                 success: true,
                 eventDetails: {
-                    eventId: updatedReservation.eventId,
-                    title: updatedReservation.event.title,
-                    numberOfTickets: updatedReservation.numberOfTickets,
-                    totalAmount: totalAmount,
-                    eventDate: updatedReservation.event.event_date,
-                    appliedPromoCode: session.metadata?.appliedPromoCode,
-                    discount: session.metadata?.discount
+                    eventId: reservation.eventId,
+                    title: reservation.event.title,
+                    numberOfTickets: reservation.numberOfTickets,
+                    totalAmount: reservation.totalAmount,
+                    eventDate: reservation.event.event_date,
+                    appliedPromoCode: reservation.appliedPromoCode,
                 }
             };
         }

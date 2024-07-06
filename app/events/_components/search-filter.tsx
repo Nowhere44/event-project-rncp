@@ -4,9 +4,13 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import DatePicker from 'react-datepicker'
-import "react-datepicker/dist/react-datepicker.css"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Button } from "@/components/ui/button"
+import { Calendar } from "@/components/ui/calendar"
 import { Checkbox } from '@/components/ui/checkbox'
+import { CalendarIcon } from '@heroicons/react/24/outline'
+import { format } from 'date-fns'
+import { fr } from 'date-fns/locale'
 import { debounce } from 'lodash'
 
 interface Tag {
@@ -79,16 +83,15 @@ const SearchFilter: React.FC<SearchFilterProps> = ({ onFilterChange }) => {
     }
 
     return (
-        <div className="flex flex-col md:flex-row gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Input
                 type="text"
                 placeholder="Rechercher un événement..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="w-full md:w-[300px]"
             />
             <Select onValueChange={handleTagChange}>
-                <SelectTrigger className="w-full md:w-[200px]">
+                <SelectTrigger>
                     <SelectValue placeholder="Tags" />
                 </SelectTrigger>
                 <SelectContent>
@@ -99,27 +102,39 @@ const SearchFilter: React.FC<SearchFilterProps> = ({ onFilterChange }) => {
                     ))}
                 </SelectContent>
             </Select>
-            <DatePicker
-                selected={date}
-                onChange={(date: Date | null) => setDate(date)}
-                placeholderText="Sélectionner une date"
-                className="w-full md:w-[200px] p-2 border rounded"
-            />
-            <div className="flex items-center space-x-2">
-                <Checkbox
-                    id="isPaid"
-                    checked={isPaid === true}
-                    onCheckedChange={(checked) => setIsPaid(checked ? true : null)}
-                />
-                <label htmlFor="isPaid">Payant</label>
-            </div>
-            <div className="flex items-center space-x-2">
-                <Checkbox
-                    id="isFree"
-                    checked={isPaid === false}
-                    onCheckedChange={(checked) => setIsPaid(checked ? false : null)}
-                />
-                <label htmlFor="isFree">Gratuit</label>
+            <Popover>
+                <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start text-left font-normal">
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {date ? format(date, 'dd MMMM yyyy', { locale: fr }) : <span>Sélectionner une date</span>}
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                    <Calendar
+                        mode="single"
+                        selected={date as Date | undefined}
+                        onSelect={(newDate) => setDate(newDate || null)}
+                        initialFocus
+                    />
+                </PopoverContent>
+            </Popover>
+            <div className="flex items-center space-x-4 mr-2">
+                <div className="flex items-center space-x-2">
+                    <Checkbox
+                        id="isPaid"
+                        checked={isPaid === true}
+                        onCheckedChange={(checked) => setIsPaid(checked ? true : null)}
+                    />
+                    <label htmlFor="isPaid">Payant</label>
+                </div>
+                <div className="flex items-center space-x-2">
+                    <Checkbox
+                        id="isFree"
+                        checked={isPaid === false}
+                        onCheckedChange={(checked) => setIsPaid(checked ? false : null)}
+                    />
+                    <label htmlFor="isFree">Gratuit</label>
+                </div>
             </div>
         </div>
     )

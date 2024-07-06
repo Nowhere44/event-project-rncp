@@ -4,6 +4,9 @@ import { useState } from 'react';
 import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function LoginForm() {
     const [email, setEmail] = useState('');
@@ -26,7 +29,7 @@ export default function LoginForm() {
                 router.push(`/profile/${session?.user?.id}`);
             }
         } catch (error) {
-            console.error("SignIn error:", error);
+            console.error("Erreur de connexion:", error);
             setError('Une erreur est survenue lors de la connexion');
         }
     };
@@ -41,49 +44,47 @@ export default function LoginForm() {
     }
 
     return (
-        <div className="bg-white p-8 rounded-lg shadow-md space-y-6">
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                        Email
-                    </label>
-                    <input
-                        type="email"
+        <div className="mx-auto grid w-[350px] gap-6">
+            <div className="grid gap-2 text-center">
+                <h1 className="text-3xl font-bold">Connexion</h1>
+                <p className="text-balance text-muted-foreground">
+                    Entrez votre email ci-dessous pour vous connecter à votre compte
+                </p>
+            </div>
+            <form onSubmit={handleSubmit} className="grid gap-4">
+                <div className="grid gap-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
                         id="email"
+                        type="email"
+                        placeholder="m@exemple.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50"
                     />
                 </div>
-                <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                        Mot de passe
-                    </label>
-                    <input
-                        type="password"
+                <div className="grid gap-2">
+                    <div className="flex items-center">
+                        <Label htmlFor="password">Mot de passe</Label>
+                    </div>
+                    <Input
                         id="password"
+                        type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50"
                     />
                 </div>
-                {error && <p className="text-red-500">{error}</p>}
-                <button
-                    type="submit"
-                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                >
+                {error && <p className="text-red-500 text-center">{error}</p>}
+                <Button type="submit" className="w-full">
                     Se connecter
-                </button>
+                </Button>
             </form>
-            <div className="text-center">
-                <p className="text-sm text-gray-600">
-                    Pas encore de compte ?{' '}
-                    <Link href="/register" className="text-indigo-600 hover:text-indigo-500">
-                        {`S'inscrire`}
-                    </Link>
-                </p>
+            <div className="mt-4 text-center text-sm">
+                Vous n'avez pas de compte ?{" "}
+                <Link href="/register" className="underline">
+                    S'inscrire
+                </Link>
             </div>
         </div>
     );

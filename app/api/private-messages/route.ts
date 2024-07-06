@@ -2,11 +2,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from "@/auth.config";
-import { prisma } from '@/server/db';
+import { createPrivateMessage, getPrivateMessages } from '@/actions';
 
 export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions);
-    if (!session || !session.user) {
+    if (!session?.user) {
         return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
@@ -18,34 +18,26 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-        const messages = await prisma.privateMessage.findMany({
-            where: {
-                OR: [
-                    { senderId: session.user.id, receiverId: otherUserId },
-                    { senderId: otherUserId, receiverId: session.user.id },
-                ],
-            },
-            include: {
-                sender: {
-                    select: {
-                        id: true,
-                        first_name: true,
-                    },
-                },
-                receiver: {
-                    select: {
-                        id: true,
-                        first_name: true,
-                    },
-                },
-            },
-            orderBy: {
-                createdAt: 'asc',
-            },
-        });
+        const messages = await getPrivateMessages(session.user.id, otherUserId);
         return NextResponse.json(messages);
     } catch (error) {
         console.error('Error fetching private messages:', error);
         return NextResponse.json({ error: 'Error fetching private messages' }, { status: 500 });
+    }
+}
+
+export async function POST(request: NextRequest) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+        return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
+    try {
+        const { receiverId, content } = await request.json();
+        const newMessage = await createPrivateMessage(session.user.id, receiverId, content);
+        return NextResponse.json(newMessage, { status: 201 });
+    } catch (error) {
+        console.error('Error creating private message:', error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }

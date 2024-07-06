@@ -21,6 +21,7 @@ const ReservationForm: React.FC<ReservationFormProps> = ({ eventId, price, avail
     const [error, setError] = useState<string | null>(null);
     const { data: session } = useSession();
     const router = useRouter();
+    const [validatedPromoCode, setValidatedPromoCode] = useState<string | null>(null);
 
     const validatePromoCode = async () => {
         try {
@@ -31,16 +32,25 @@ const ReservationForm: React.FC<ReservationFormProps> = ({ eventId, price, avail
             });
             const data = await response.json();
             if (response.ok) {
-                setDiscount(data.discount);
-                setError(null);
+                if (data.discount > 100) {
+                    setError('La réduction ne peut pas dépasser 100 %');
+                    setDiscount(0);
+                    setValidatedPromoCode(null);
+                } else {
+                    setDiscount(data.discount);
+                    setValidatedPromoCode(promoCode);
+                    setError(null);
+                }
             } else {
                 setError(data.error || 'Code promo invalide');
                 setDiscount(0);
+                setValidatedPromoCode(null);
             }
         } catch (error) {
             console.error('Erreur lors de la validation du code promo:', error);
             setError('Erreur lors de la validation du code promo');
             setDiscount(0);
+            setValidatedPromoCode(null);
         }
     };
 
@@ -58,7 +68,7 @@ const ReservationForm: React.FC<ReservationFormProps> = ({ eventId, price, avail
                 body: JSON.stringify({
                     eventId,
                     numberOfTickets,
-                    promoCode: discount > 0 ? promoCode : undefined,
+                    promoCode: validatedPromoCode,
                 }),
             });
             const data = await response.json();

@@ -1,5 +1,4 @@
 "use client"
-
 import { useSession, signOut } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -8,46 +7,46 @@ import { Button } from '../ui/button';
 import NavItems from './NavItems';
 import MobileNav from './MobileNav';
 
-
 export const Header = () => {
     const { data: session, status } = useSession();
 
-
-    const handleLogout = async () => {
-        await signOut({ callbackUrl: '/' });
-    };
-
     return (
-        <header className='w-full border-b'>
-            <div className='wrapper flex items-center justify-between'>
-                <Link href="/" className='w-16'>
+        <header className='w-full border-b bg-white shadow-sm sticky top-0 z-[1005]'>
+            <div className='wrapper flex items-center justify-between py-4 px-6 md:px-10'>
+                <Link href="/" className='flex items-center space-x-2'>
                     <Image
                         src="/assets/images/diamond-removebg-preview.png"
-                        width={130}
-                        height={50}
+                        width={40}
+                        height={40}
                         alt='Event logo'
+                        className="w-auto h-10"
                     />
+                    <span className="text-xl font-bold text-gray-800">Evy</span>
                 </Link>
+
                 {status === 'authenticated' ? (
                     <>
-                        <nav className='md:flex-between hidden w-full max-w-xs'>
+                        <nav className='hidden md:flex items-center space-x-6'>
                             <NavItems />
                         </nav>
-                        <div className='flex w-32 justify-end gap-3'>
-                            <Button className='rounded-full' size="lg" onClick={handleLogout}>
-                                Deconnexion
-                            </Button>
+                        <div className='flex items-center space-x-4'>
+                            <div className='hidden md:block'>                      <Button
+                                variant='default'
+                                size="sm"
+                                onClick={() => signOut({ callbackUrl: '/' })}
+                            >
+                                Déconnexion
+                            </Button></div>
+
                             <MobileNav />
                         </div>
                     </>
                 ) : (
-                    <div className='flex w-32 justify-end gap-3'>
-                        <Button asChild className='rounded-full' size="lg">
-                            <Link href="/login">
-                                Connexion
-                            </Link>
-                        </Button>
-                    </div>
+                    <Button asChild variant='default' size="sm">
+                        <Link href="/login">
+                            Connexion
+                        </Link>
+                    </Button>
                 )}
             </div>
         </header>

@@ -1,18 +1,15 @@
-// app/api/ratings/[reservationId]/route.ts
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/auth.config";
-import { connectToDatabase } from '@/lib/database';
-import Rating from '@/lib/database/models/rating.model';
-import { updateEventRating, updateUserRating } from '@/lib/ratingUtils';
+import { createRating, updateEventRatingByUser, deleteEventRating, getRatingByEventAndUser } from '@/actions';
 import { prisma } from '@/server/db';
 
 export async function POST(
-    request: Request,
+    request: NextRequest,
     { params }: { params: { reservationId: string } }
 ) {
     const session = await getServerSession(authOptions);
-    if (!session) {
+    if (!session?.user) {
         return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
@@ -21,29 +18,15 @@ export async function POST(
 
         const reservation = await prisma.reservation.findUnique({
             where: { id: params.reservationId },
-            include: { event: true, user: true }
+            include: { event: true }
         });
 
         if (!reservation) {
             return NextResponse.json({ error: "Reservation not found" }, { status: 404 });
         }
 
-        await connectToDatabase();
-        const updatedRating = await Rating.findOneAndUpdate(
-            { reservationId: params.reservationId },
-            {
-                rating,
-                comment,
-                userId: session.user.id.toString(),
-                eventId: reservation.event.id
-            },
-            { upsert: true, new: true }
-        );
-
-        await updateEventRating(reservation.event.id);
-        await updateUserRating(reservation.user.id);
-
-        return NextResponse.json(updatedRating);
+        const newRating = await createRating(session.user.id, reservation.event.id, rating, comment);
+        return NextResponse.json(newRating);
     } catch (error) {
         console.error('Error creating/updating rating:', error);
         return NextResponse.json({ error: 'Error creating/updating rating' }, { status: 500 });
@@ -51,31 +34,30 @@ export async function POST(
 }
 
 export async function PUT(
-    request: Request,
+    request: NextRequest,
     { params }: { params: { reservationId: string } }
 ) {
     const session = await getServerSession(authOptions);
-    if (!session) {
+    if (!session?.user) {
         return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
     try {
         const { rating, comment } = await request.json();
 
-        await connectToDatabase();
-        const updatedRating = await Rating.findOneAndUpdate(
-            { reservationId: params.reservationId },
-            { rating, comment },
-            { new: true }
-        );
+        const reservation = await prisma.reservation.findUnique({
+            where: { id: params.reservationId },
+            include: { event: true }
+        });
 
+        if (!reservation) {
+            return NextResponse.json({ error: "Reservation not found" }, { status: 404 });
+        }
+
+        const updatedRating = await updateEventRatingByUser(reservation.event.id, session.user.id, rating, comment);
         if (!updatedRating) {
             return NextResponse.json({ error: "Rating not found" }, { status: 404 });
         }
-
-        await updateEventRating(updatedRating.eventId);
-        await updateUserRating(session.user.id.toString());
-
         return NextResponse.json(updatedRating);
     } catch (error) {
         console.error('Error updating rating:', error);
@@ -84,25 +66,28 @@ export async function PUT(
 }
 
 export async function DELETE(
-    request: Request,
+    request: NextRequest,
     { params }: { params: { reservationId: string } }
 ) {
     const session = await getServerSession(authOptions);
-    if (!session) {
+    if (!session?.user) {
         return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
     try {
-        await connectToDatabase();
-        const deletedRating = await Rating.findOneAndDelete({ reservationId: params.reservationId });
+        const reservation = await prisma.reservation.findUnique({
+            where: { id: params.reservationId },
+            include: { event: true }
+        });
 
+        if (!reservation) {
+            return NextResponse.json({ error: "Reservation not found" }, { status: 404 });
+        }
+
+        const deletedRating = await deleteEventRating(reservation.event.id, session.user.id);
         if (!deletedRating) {
             return NextResponse.json({ error: "Rating not found" }, { status: 404 });
         }
-
-        await updateEventRating(deletedRating.eventId);
-        await updateUserRating(session.user.id.toString());
-
         return NextResponse.json({ message: "Rating deleted successfully" });
     } catch (error) {
         console.error('Error deleting rating:', error);
@@ -111,10 +96,23 @@ export async function DELETE(
 }
 
 export async function GET(
-    request: Request,
+    request: NextRequest,
     { params }: { params: { reservationId: string } }
 ) {
-    await connectToDatabase();
-    const rating = await Rating.findOne({ reservationId: params.reservationId });
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+        return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
+    const reservation = await prisma.reservation.findUnique({
+        where: { id: params.reservationId },
+        include: { event: true }
+    });
+
+    if (!reservation) {
+        return NextResponse.json({ error: "Reservation not found" }, { status: 404 });
+    }
+
+    const rating = await getRatingByEventAndUser(reservation.event.id, session.user.id);
     return NextResponse.json(rating || null);
 }

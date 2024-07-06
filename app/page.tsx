@@ -17,7 +17,7 @@ export default function Home() {
   const fetchEvents = useCallback(async (filters = {}) => {
     setIsLoading(true);
     try {
-      const queryParams = new URLSearchParams({ ...filters, limit: '6' }).toString();
+      const queryParams = new URLSearchParams({ ...filters, limit: '3' }).toString();
       const response = await fetch(`/api/events?${queryParams}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -38,63 +38,72 @@ export default function Home() {
     fetchEvents({ limit: 6 });
   }, [fetchEvents]);
 
-  return (
-    <>
-      <section className="bg-primary-50 bg-dotted-pattern bg-contain py-5 md:py-10">
-        <div className="wrapper grid grid-cols-1 gap-5 md:grid-cols-2 2xl:gap-12 items-center">
-          <div className="flex flex-col justify-center gap-8">
-            <h1 className="h1-bold">Organisez, Connectez, Célébrez: Vos Événements, Notre Plateforme!</h1>
-            <p className="p-regular-20 md:p-regular-24">Réservez et découvrez des conseils utiles de plus de 3 168 mentors dans des entreprises de classe mondiale avec notre communauté globale.</p>
-            <p className="p-regular-20 md:p-regular-24">{`Notre application vous permet de créer, gérer et participer à divers événements. Que ce soit pour des soirées, des séminaires, des jeux, ou des ateliers, nous facilitons l'organisation et la participation à vos événements préférés.`}</p>
-            <Button size="lg" asChild className="button w-full sm:w-fit">
-              <Link href="#events">
-                Explorez Maintenant
-              </Link>
-            </Button>
-          </div>
 
-          <Image
-            src="/assets/images/10821625.jpg"
-            alt="héros"
-            width={1000}
-            height={1000}
-            className="max-h-[70vh] object-contain object-center 2xl:max-h-[50vh]"
-          />
+  return (
+    <div className="flex flex-col">
+      <section className="bg-primary-50 bg-dotted-pattern bg-contain py-10">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div className="space-y-6">
+              <h1 className="text-4xl md:text-5xl font-bold leading-tight">Organisez, Connectez, Célébrez: Vos Événements, Notre Plateforme!</h1>
+              <p className="text-lg md:text-xl">Réservez et découvrez des conseils utiles de plus de 3 168 mentors dans des entreprises de classe mondiale avec notre communauté globale.</p>
+              <p className="text-lg md:text-xl">Notre application vous permet de créer, gérer et participer à divers événements. Que ce soit pour des soirées, des séminaires, des jeux, ou des ateliers, nous facilitons l'organisation et la participation à vos événements préférés.</p>
+              <Button size="lg" asChild>
+                <Link href="/events">
+                  Explorez Maintenant
+                </Link>
+              </Button>
+            </div>
+            <Image
+              src="https://wallpaperaccess.com/full/3329.jpg"
+              alt="héros"
+              width={500}
+              height={500}
+              className="rounded-lg shadow-lg"
+            />
+          </div>
         </div>
       </section>
 
-      <section id="events" className="wrapper my-8 flex flex-col gap-8 md:gap-12">
-        <h2 className="h2-bold">Découvrez les événements près de chez vous</h2>
-        <EventMap events={events} />
+      <section id="events" className="py-16">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold mb-8">Découvrez les événements près de chez vous</h2>
+          <EventMap events={events} />
 
-        <h2 className="h2-bold">Faites Confiance à des {`Milliers d'Événements`}</h2>
-        <p className="p-regular-20 md:p-regular-24">{`Notre plateforme est utilisée par des milliers d'organisateurs d'événements pour planifier et exécuter leurs événements avec succès. Rejoignez-nous pour une expérience unique et enrichissante.`}</p>
+          <h2 className="text-3xl font-bold mt-16 mb-4">Faites Confiance à des Milliers d'Événements</h2>
+          <p className="text-lg mb-8">Notre plateforme est utilisée par des milliers d'organisateurs d'événements pour planifier et exécuter leurs événements avec succès. Rejoignez-nous pour une expérience unique et enrichissante.</p>
 
-        <SearchFilter onFilterChange={fetchEvents} />
+          <div className='mb-6'>
+            <SearchFilter onFilterChange={fetchEvents} />
+          </div>
 
-        {isLoading ? (
-          <p>Chargement des événements...</p>
-        ) : (
-          <EventList
-            data={events}
-            emptyTitle="Aucun événement trouvé"
-            emptyStateSubtext="Revenez plus tard pour voir de nouveaux événements"
-            collectionType="All_Events"
-            limit={6}
-            page={1}
-            totalPages={1}
-            urlParamName="page"
-          />
-        )}
 
-        {events.length > 0 && (
-          <Button size="lg" asChild className="button w-full sm:w-fit mx-auto">
-            <Link href="/events">
-              Voir tous les événements
-            </Link>
-          </Button>
-        )}
+          {isLoading ? (
+            <p className="text-center py-8">Chargement des événements...</p>
+          ) : (
+            <EventList
+              data={events}
+              emptyTitle="Aucun événement trouvé"
+              emptyStateSubtext="Revenez plus tard pour voir de nouveaux événements"
+              collectionType="All_Events"
+              limit={6}
+              page={1}
+              totalPages={1}
+              urlParamName="page"
+            />
+          )}
+
+          {events.length > 0 && (
+            <div className="text-center mt-8">
+              <Button size="lg" asChild>
+                <Link href="/events">
+                  Voir tous les événements
+                </Link>
+              </Button>
+            </div>
+          )}
+        </div>
       </section>
-    </>
+    </div>
   )
 }

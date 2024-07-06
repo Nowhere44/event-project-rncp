@@ -206,6 +206,7 @@ export interface IReservation {
         end_time: Date;
         event_date: Date;
         reservationDate: Date;
+        imageUrl?: string;
     };
     rating?: number;
     comment?: string;
