@@ -20,6 +20,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
             last_name: body.lastName,
             email: body.email,
             profile_picture: body.image,
+            date_of_birth: body.dateOfBirth ? new Date(body.dateOfBirth) : undefined,
         });
         revalidatePath(`/profile/${params.id}`);
         return NextResponse.json(updatedUser, { status: 200 });

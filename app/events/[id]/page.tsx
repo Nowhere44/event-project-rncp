@@ -30,6 +30,7 @@ export default async function EventPage({ params, searchParams }: { params: { id
     }
 
     const isOwner = session?.user?.id === event.userId;
+    const isAuthenticated = !!session;
 
     const handleDelete = async () => {
         'use server'
@@ -156,14 +157,21 @@ export default async function EventPage({ params, searchParams }: { params: { id
                                     </div>
                                     <div className="mt-5">
                                         {event.availableTickets > 0 && new Date(event.event_date) > new Date() ? (
-                                            session && session.user.id !== event.userId && (
-                                                <ReservationForm
-                                                    eventId={event.id}
-                                                    price={event.price}
-                                                    availableTickets={event.availableTickets}
-                                                    isPaid={event.is_paid}
-                                                    eventDate={event.event_date.toISOString()}
-                                                />
+                                            isAuthenticated ? (
+                                                !isOwner && (
+                                                    <ReservationForm
+                                                        eventId={event.id}
+                                                        price={event.price}
+                                                        availableTickets={event.availableTickets}
+                                                        isPaid={event.is_paid}
+                                                        eventDate={event.event_date.toISOString()}
+                                                    />
+                                                )
+                                            ) : (
+                                                <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4" role="alert">
+                                                    <p className="font-bold">Information</p>
+                                                    <p>Pour réserver cet événement, veuillez vous <Link href="/login" className="underline">connecter</Link> ou <Link href="/register" className="underline">créer un compte</Link>.</p>
+                                                </div>
                                             )
                                         ) : (
                                             <p className="text-sm font-medium text-red-800">

@@ -1,5 +1,7 @@
 export const publicRoutes = [
-    "/"
+    "/",
+    "/events",
+    "/events/*"
 ]
 
 export const authRoutes = [

@@ -231,6 +231,7 @@ export interface IUser {
     profile_picture?: string;
     role: string;
     totalRevenue?: number;
+    date_of_birth?: Date;
 
 }
 

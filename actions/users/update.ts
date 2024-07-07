@@ -3,11 +3,13 @@ import { prisma } from "@/server/db";
 import { revalidatePath } from "next/cache";
 import { Prisma, ReservationStatus, PaymentStatus } from "@prisma/client";
 
+
 export const updateUser = async (id: string, userData: {
     first_name?: string;
     last_name?: string;
     email?: string;
     profile_picture?: string;
+    date_of_birth?: Date;
 }) => {
     try {
         const updatedUser = await prisma.user.update({

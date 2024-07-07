@@ -4,6 +4,21 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from "@/auth.config";
 import { validatePromoCode } from '@/actions';
 import { updateEvent } from '@/actions/events/update';
+import { getEventById } from '@/actions/events/read';
+
+
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+    try {
+        const event = await getEventById(params.id);
+        if (!event) {
+            return NextResponse.json({ error: 'Événement non trouvé' }, { status: 404 });
+        }
+        return NextResponse.json(event);
+    } catch (error) {
+        console.error('Error fetching event:', error);
+        return NextResponse.json({ error: 'Erreur lors de la récupération de l\'événement' }, { status: 500 });
+    }
+}
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
     const session = await getServerSession(authOptions);

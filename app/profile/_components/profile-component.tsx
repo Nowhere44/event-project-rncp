@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 interface ProfileComponentProps {
     userId: string;
@@ -16,7 +18,7 @@ interface ProfileComponentProps {
 }
 
 export default function ProfileComponent({ userId, userData }: ProfileComponentProps) {
-    const { data: session, update, status } = useSession();
+    const { data: session, update } = useSession();
     const router = useRouter();
     const [isEditing, setIsEditing] = useState(false);
     const [editedUserData, setEditedUserData] = useState({
@@ -24,6 +26,7 @@ export default function ProfileComponent({ userId, userData }: ProfileComponentP
         lastName: '',
         email: '',
         image: '',
+        dateOfBirth: null as Date | null,
     });
 
     useEffect(() => {
@@ -33,13 +36,10 @@ export default function ProfileComponent({ userId, userData }: ProfileComponentP
                 lastName: userData.last_name || '',
                 email: userData.email || '',
                 image: userData.profile_picture || '',
+                dateOfBirth: userData.date_of_birth ? new Date(userData.date_of_birth) : null,
             });
         }
     }, [userData]);
-
-    if (status === 'loading' || !session?.user || !userData) {
-        return null;
-    }
 
     const handleEdit = () => setIsEditing(true);
 
@@ -48,7 +48,13 @@ export default function ProfileComponent({ userId, userData }: ProfileComponentP
             const response = await fetch(`/api/users/${userId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(editedUserData),
+                body: JSON.stringify({
+                    firstName: editedUserData.firstName,
+                    lastName: editedUserData.lastName,
+                    email: editedUserData.email,
+                    image: editedUserData.image,
+                    dateOfBirth: editedUserData.dateOfBirth?.toISOString(),
+                }),
             });
 
             if (response.ok) {
@@ -56,7 +62,7 @@ export default function ProfileComponent({ userId, userData }: ProfileComponentP
                 await update({
                     ...session,
                     user: {
-                        ...session.user,
+                        ...session?.user,
                         firstName: updatedUser.first_name,
                         lastName: updatedUser.last_name,
                         email: updatedUser.email,
@@ -71,7 +77,8 @@ export default function ProfileComponent({ userId, userData }: ProfileComponentP
         } catch (error) {
             console.error('Error updating profile:', error);
         }
-    };
+    }
+
 
     const handleDelete = async () => {
         if (typeof window !== 'undefined' && window.confirm('Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.')) {
@@ -92,8 +99,8 @@ export default function ProfileComponent({ userId, userData }: ProfileComponentP
         <Card className="w-full max-w-sm mx-auto">
             <CardContent className="flex flex-col items-center pt-6">
                 <Avatar className="w-24 h-24 border-4 border-white z-10 mb-4">
-                    <AvatarImage src={session.user.image || ""} alt="Profile" />
-                    <AvatarFallback>{session.user.firstName?.[0]}{session.user.lastName?.[0]}</AvatarFallback>
+                    <AvatarImage src={session?.user.image || ""} alt="Profile" />
+                    <AvatarFallback>{session?.user.firstName?.[0]}{session?.user.lastName?.[0]}</AvatarFallback>
                 </Avatar>
                 {isEditing ? (
                     <Input
@@ -121,21 +128,36 @@ export default function ProfileComponent({ userId, userData }: ProfileComponentP
                             />
                         </div>
                     ) : (
-                        `${session.user.firstName} ${session.user.lastName}`
+                        `${session?.user.firstName} ${session?.user.lastName}`
                     )}
                 </h2>
-                <p className="text-gray-600 text-center">{userData.role || 'Utilisateur'}</p>
 
                 {isEditing ? (
-                    <Input
-                        type="email"
-                        value={editedUserData.email}
-                        onChange={(e) => setEditedUserData({ ...editedUserData, email: e.target.value })}
-                        placeholder="Email"
-                        className="mt-2"
-                    />
+                    <>
+                        <Input
+                            type="email"
+                            value={editedUserData.email}
+                            onChange={(e) => setEditedUserData({ ...editedUserData, email: e.target.value })}
+                            placeholder="Email"
+                            className="mt-2"
+                        />
+                        <div className="mt-2">
+                            <DatePicker
+                                selected={editedUserData.dateOfBirth}
+                                onChange={(date) => setEditedUserData({ ...editedUserData, dateOfBirth: date })}
+                                dateFormat="dd/MM/yyyy"
+                                placeholderText="Date de naissance"
+                                className="w-full p-2 border rounded"
+                            />
+                        </div>
+                    </>
                 ) : (
-                    <p className="text-gray-600 text-center">{session.user.email}</p>
+                    <>
+                        <p className="text-gray-600 text-center">{session?.user.email}</p>
+                        <p className="text-gray-600 text-center">
+                            {userData?.date_of_birth ? new Date(userData.date_of_birth).toLocaleDateString() : 'Date de naissance non spécifiée'}
+                        </p>
+                    </>
                 )}
 
                 {userData && userData.totalRevenue && Number(userData.totalRevenue) > 0 && (

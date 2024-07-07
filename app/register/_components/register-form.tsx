@@ -33,7 +33,7 @@ export default function RegisterForm() {
                     email,
                     password,
                     date_of_birth: dateOfBirth ? new Date(dateOfBirth).toISOString() : undefined,
-                    profile_picture: profilePictureUrl,
+                    profile_picture: profilePictureUrl || undefined, // Si vide, on n'envoie pas ce champ
                 }),
             });
 
@@ -111,7 +111,7 @@ export default function RegisterForm() {
                     />
                 </div>
                 <div className="grid gap-2">
-                    <Label htmlFor="profilePictureUrl">URL de la photo de profil</Label>
+                    <Label htmlFor="profilePictureUrl">URL de la photo de profil (optionnel)</Label>
                     <Input
                         id="profilePictureUrl"
                         type="url"
