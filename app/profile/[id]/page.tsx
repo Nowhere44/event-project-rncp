@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { CalendarIcon } from '@heroicons/react/24/outline';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import Image from 'next/image';
 
 export default function ProfilePage() {
     const { data: session, status } = useSession();
@@ -120,7 +121,10 @@ export default function ProfilePage() {
                                             <Link href={`/reservations/${reservation.id}`} key={reservation.id}>
                                                 <div className="flex items-center gap-2 mb-4 p-4 border rounded-lg hover:bg-gray-50 transition duration-150 ease-in-out">
 
-                                                    <img src={reservation.event?.imageUrl} className='w-8 h-8' />
+                                                    <Image src={reservation.event?.imageUrl || ''} className='w-8 h-8' alt='event-Image'
+                                                        width={32}
+                                                        height={32}
+                                                    />
 
                                                     <div>
                                                         <h3 className="text-lg font-medium">{reservation.event.title}</h3>

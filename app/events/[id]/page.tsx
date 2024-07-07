@@ -13,6 +13,7 @@ import { CommentSection } from './_components/comment-section';
 import PromoCodeGenerator from './_components/promo-code-generator';
 import { verifyPayment } from '@/actions/payment';
 import { CalendarDaysIcon, ClockIcon, MapPinIcon, UsersIcon, TagIcon, CreditCardIcon } from '@heroicons/react/24/outline';
+import Image from 'next/image';
 
 export default async function EventPage({ params, searchParams }: { params: { id: string }, searchParams: { session_id?: string } }) {
     const session = await getServerSession(authOptions);
@@ -46,10 +47,12 @@ export default async function EventPage({ params, searchParams }: { params: { id
                             <div className="bg-white shadow sm:rounded-lg overflow-hidden">
                                 {event.imageUrl && (
                                     <div className="w-full h-64 sm:h-80 md:h-96 overflow-hidden">
-                                        <img
+                                        <Image
                                             src={event.imageUrl}
                                             alt={event.title}
                                             className="w-full h-full object-cover"
+                                            width={800}
+                                            height={400}
                                         />
                                     </div>
                                 )}

@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import React from 'react'
 import { Button } from '../ui/button'
 import { formUrlQuery } from '@/lib/utils'
+import { Suspense } from 'react';
 
 type PaginationProps = {
     page: number | string,
@@ -30,26 +31,28 @@ const Pagination = ({ page, totalPages, urlParamName }: PaginationProps) => {
     }
 
     return (
-        <div className="flex gap-2">
-            <Button
-                size="lg"
-                variant="outline"
-                className="w-28"
-                onClick={() => onClick('prev')}
-                disabled={Number(page) <= 1}
-            >
-                Previous
-            </Button>
-            <Button
-                size="lg"
-                variant="outline"
-                className="w-28"
-                onClick={() => onClick('next')}
-                disabled={Number(page) >= totalPages}
-            >
-                Next
-            </Button>
-        </div>
+        <Suspense fallback={<div>Loading...</div>}>
+            <div className="flex gap-2">
+                <Button
+                    size="lg"
+                    variant="outline"
+                    className="w-28"
+                    onClick={() => onClick('prev')}
+                    disabled={Number(page) <= 1}
+                >
+                    Previous
+                </Button>
+                <Button
+                    size="lg"
+                    variant="outline"
+                    className="w-28"
+                    onClick={() => onClick('next')}
+                    disabled={Number(page) >= totalPages}
+                >
+                    Next
+                </Button>
+            </div>
+        </Suspense>
     )
 }
 

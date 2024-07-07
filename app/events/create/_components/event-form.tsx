@@ -173,7 +173,8 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                         {errors.imageUrl && <p className="mt-1 text-sm text-red-600">{errors.imageUrl.message as string}</p>}
                         {watch('imageUrl') && (
                             <div className="mt-2">
-                                <Image src={watch('imageUrl')} alt="Event image" width={200} height={200} className="rounded-lg" />
+                                <Image src={watch('imageUrl')} alt="Event image" width={200} height={200} className="rounded-lg"
+                                />
                             </div>
                         )}
                     </div>

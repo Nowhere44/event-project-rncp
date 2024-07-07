@@ -8,6 +8,7 @@ import { CalendarIcon, MapPinIcon, UsersIcon, StarIcon } from '@heroicons/react/
 import { AspectRatio } from "@/components/ui/aspect-ratio"
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
+import Image from 'next/image'
 
 type CardProps = {
     event: IEvent,
@@ -30,10 +31,12 @@ const EventCard = ({ event, hasOrderLink, hidePrice }: CardProps) => {
             <Card className="h-full flex flex-col">
                 <CardHeader className="p-0">
                     <AspectRatio ratio={16 / 9}>
-                        <img
+                        <Image
                             src={event.imageUrl || '/placeholder.jpg'}
                             alt={event.title}
                             className="object-cover w-full h-full rounded-t-lg"
+                            width={500}
+                            height={500}
                         />
                     </AspectRatio>
                 </CardHeader>

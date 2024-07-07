@@ -46,8 +46,9 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             <div className="space-y-6">
               <h1 className="text-4xl md:text-5xl font-bold leading-tight">Organisez, Connectez, Célébrez: Vos Événements, Notre Plateforme!</h1>
-              <p className="text-lg md:text-xl">Réservez et découvrez des conseils utiles de plus de 3 168 mentors dans des entreprises de classe mondiale avec notre communauté globale.</p>
-              <p className="text-lg md:text-xl">Notre application vous permet de créer, gérer et participer à divers événements. Que ce soit pour des soirées, des séminaires, des jeux, ou des ateliers, nous facilitons l'organisation et la participation à vos événements préférés.</p>
+              <p className="text-lg md:text-xl">{`Notre application vous permet de créer, gérer et participer à divers événements. Que ce soit pour des soirées, des séminaires, des jeux, ou des ateliers, nous facilitons l'organisation et la participation à vos événements préférés.`}</p>
+              <h2 className="text-3xl font-bold mt-16 mb-4">{`Faites Confiance à des Milliers d'Événements`}</h2>
+              <p className="text-lg mb-8">{`Notre plateforme est utilisée par des milliers d'organisateurs d'événements pour planifier et exécuter leurs événements avec succès. Rejoignez-nous pour une expérience unique et enrichissante.`}</p>
               <Button size="lg" asChild>
                 <Link href="/events">
                   Explorez Maintenant
@@ -70,8 +71,8 @@ export default function Home() {
           <h2 className="text-3xl font-bold mb-8">Découvrez les événements près de chez vous</h2>
           <EventMap events={events} />
 
-          <h2 className="text-3xl font-bold mt-16 mb-4">Faites Confiance à des Milliers d'Événements</h2>
-          <p className="text-lg mb-8">Notre plateforme est utilisée par des milliers d'organisateurs d'événements pour planifier et exécuter leurs événements avec succès. Rejoignez-nous pour une expérience unique et enrichissante.</p>
+          <h2 className="text-3xl font-bold mt-16 mb-4">{`Faites Confiance à des Milliers d'Événement`}s</h2>
+          <p className="text-lg mb-8">{`Notre plateforme est utilisée par des milliers d'organisateurs d'événements pour planifier et exécuter leurs événements avec succès. Rejoignez-nous pour une expérience unique et enrichissante.`}</p>
 
           <div className='mb-6'>
             <SearchFilter onFilterChange={fetchEvents} />

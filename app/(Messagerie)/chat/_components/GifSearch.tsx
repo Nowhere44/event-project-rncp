@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
+import Image from 'next/image';
 
 interface GifSearchProps {
     onSend: (gifUrl: string) => void;
@@ -44,7 +45,7 @@ const GifSearch: React.FC<GifSearchProps> = ({ onSend, onClose }) => {
             </div>
             <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto">
                 {gifs.map((gif) => (
-                    <img
+                    <Image
                         key={gif.id}
                         src={gif.images.fixed_height_small.url}
                         alt="GIF"

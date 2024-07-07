@@ -9,6 +9,7 @@ import { fr } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { CalendarIcon, TicketIcon, CurrencyEuroIcon } from '@heroicons/react/24/outline'
+import Image from 'next/image';
 
 export default function ReservationDetailPage() {
     const params = useParams();
@@ -142,10 +143,12 @@ export default function ReservationDetailPage() {
                     </CardHeader>
                     <CardContent>
                         {reservation?.event?.imageUrl && (
-                            <img
+                            <Image
                                 src={reservation.event.imageUrl}
                                 alt={reservation.event.title}
                                 className="w-full h-48 object-cover rounded-md mb-4"
+                                width={500}
+                                height={300}
                             />
                         )}
                         <div className="space-y-2">

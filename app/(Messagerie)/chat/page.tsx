@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import io, { Socket } from 'socket.io-client';
-import { Send, Smile, Search, Menu } from 'lucide-react';
+import { Smile, Menu } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +41,7 @@ const ChatPage = () => {
     const socketRef = useRef<Socket | null>(null);
     const [userNotifications, setUserNotifications] = useState<{ [key: string]: number }>({});
     const messagesEndRef = useRef<null | HTMLDivElement>(null);
+
 
     useEffect(() => {
         if (session?.user?.id && !socketRef.current) {
@@ -91,6 +92,8 @@ const ChatPage = () => {
             }
         });
     };
+
+
 
     const fetchUsers = async () => {
         const response = await fetch('/api/users');
@@ -229,7 +232,7 @@ const ChatPage = () => {
                             />
                         </SheetContent>
                     </Sheet>
-                    <h1 className="text-xl font-semibold">L'Agora</h1>
+                    <h1 className="text-xl font-semibold">{`L'Agora`}</h1>
                 </div>
 
                 <ScrollArea className="flex-1">

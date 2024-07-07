@@ -12,6 +12,7 @@ import { CalendarIcon } from '@heroicons/react/24/outline'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { debounce } from 'lodash'
+import { Suspense } from 'react';
 
 interface Tag {
     id: string;
@@ -60,6 +61,10 @@ const SearchFilter: React.FC<SearchFilterProps> = ({ onFilterChange }) => {
         if (date) filters.date = date.toISOString();
         if (isPaid !== null) filters.isPaid = isPaid.toString();
 
+        const debouncedFilterChange = debounce((filters) => {
+            onFilterChange(filters);
+        }, 300);
+
         debouncedFilterChange(filters);
 
         // Mise à jour de l'URL
@@ -72,7 +77,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({ onFilterChange }) => {
             }
         })
         router.push(`?${params.toString()}`, { scroll: false })
-    }, [query, tags, date, isPaid, debouncedFilterChange, router, searchParams])
+    }, [query, tags, date, isPaid, onFilterChange, router, searchParams]);
 
     const handleTagChange = (tagName: string) => {
         setTags(prev =>
@@ -83,60 +88,62 @@ const SearchFilter: React.FC<SearchFilterProps> = ({ onFilterChange }) => {
     }
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Input
-                type="text"
-                placeholder="Rechercher un événement..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-            />
-            <Select onValueChange={handleTagChange}>
-                <SelectTrigger>
-                    <SelectValue placeholder="Tags" />
-                </SelectTrigger>
-                <SelectContent>
-                    {availableTags.map(tag => (
-                        <SelectItem key={tag.id} value={tag.name}>
-                            {tag.name}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-            <Popover>
-                <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start text-left font-normal">
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {date ? format(date, 'dd MMMM yyyy', { locale: fr }) : <span>Sélectionner une date</span>}
-                    </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                    <Calendar
-                        mode="single"
-                        selected={date as Date | undefined}
-                        onSelect={(newDate) => setDate(newDate || null)}
-                        initialFocus
-                    />
-                </PopoverContent>
-            </Popover>
-            <div className="flex items-center space-x-4 mr-2">
-                <div className="flex items-center space-x-2">
-                    <Checkbox
-                        id="isPaid"
-                        checked={isPaid === true}
-                        onCheckedChange={(checked) => setIsPaid(checked ? true : null)}
-                    />
-                    <label htmlFor="isPaid">Payant</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                    <Checkbox
-                        id="isFree"
-                        checked={isPaid === false}
-                        onCheckedChange={(checked) => setIsPaid(checked ? false : null)}
-                    />
-                    <label htmlFor="isFree">Gratuit</label>
+        <Suspense fallback={<div>Loading...</div>}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Input
+                    type="text"
+                    placeholder="Rechercher un événement..."
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                />
+                <Select onValueChange={handleTagChange}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Tags" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {availableTags.map(tag => (
+                            <SelectItem key={tag.id} value={tag.name}>
+                                {tag.name}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full justify-start text-left font-normal">
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {date ? format(date, 'dd MMMM yyyy', { locale: fr }) : <span>Sélectionner une date</span>}
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                        <Calendar
+                            mode="single"
+                            selected={date as Date | undefined}
+                            onSelect={(newDate) => setDate(newDate || null)}
+                            initialFocus
+                        />
+                    </PopoverContent>
+                </Popover>
+                <div className="flex items-center space-x-4 mr-2">
+                    <div className="flex items-center space-x-2">
+                        <Checkbox
+                            id="isPaid"
+                            checked={isPaid === true}
+                            onCheckedChange={(checked) => setIsPaid(checked ? true : null)}
+                        />
+                        <label htmlFor="isPaid">Payant</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <Checkbox
+                            id="isFree"
+                            checked={isPaid === false}
+                            onCheckedChange={(checked) => setIsPaid(checked ? false : null)}
+                        />
+                        <label htmlFor="isFree">Gratuit</label>
+                    </div>
                 </div>
             </div>
-        </div>
+        </Suspense>
     )
 }
 

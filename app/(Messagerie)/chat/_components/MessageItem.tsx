@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Edit2, Trash2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import Image from 'next/image';
 
 interface MessageItemProps {
     message: {
@@ -41,7 +42,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, currentUserId, onDel
             <div className={`max-w-[70%] ${isOwnMessage ? 'bg-blue-500 text-white' : 'bg-white'} rounded-lg p-3 shadow-sm`}>
                 {!isOwnMessage && <p className="text-xs font-semibold mb-1">{senderName}</p>}
                 {message.type === 'gif' ? (
-                    <img src={message.content} alt="GIF" className="max-w-full rounded" />
+                    <Image src={message.content} alt="GIF" className="max-w-full rounded" width={100} height={100} />
                 ) : isEditing ? (
                     <input
                         type="text"

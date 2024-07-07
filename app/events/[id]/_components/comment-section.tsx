@@ -3,6 +3,7 @@ import { connectToDatabase } from "@/lib/database";
 import Rating from "@/lib/database/models/rating.model";
 import { prisma } from "@/server/db";
 import { formatDate } from "@/lib/utils";
+import Image from 'next/image';
 
 async function fetchComments(eventId: string) {
     await connectToDatabase();
@@ -41,7 +42,10 @@ export async function CommentSection({ eventId }: { eventId: string }) {
                                     <div className="w-px bg-gray-200"></div>
                                 </div>
                                 <div className="relative flex h-6 w-6 flex-none items-center justify-center bg-white">
-                                    <img src={comment.userDetails?.profile_picture} className="h-6 w-6 text-gray-400" aria-hidden="true" />
+                                    <Image src={comment.userDetails?.profile_picture} className="h-6 w-6 text-gray-400" aria-hidden="true" alt='profile-picture'
+                                        width={24}
+                                        height={24}
+                                    />
                                 </div>
                                 <div className="flex-auto rounded-md p-3 ring-1 ring-inset ring-gray-200">
                                     <div className="flex justify-between gap-x-4">

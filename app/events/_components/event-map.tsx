@@ -10,6 +10,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Button } from "@/components/ui/button";
 import { Locate, X } from 'lucide-react';
+import Image from 'next/image';
 
 type EventMapProps = {
     events: IEvent[];
@@ -24,11 +25,22 @@ const EventMap = ({ events }: EventMapProps) => {
     const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
-        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        const checkMobile = () => {
+            if (typeof window !== 'undefined') {
+                setIsMobile(window.innerWidth < 768);
+            }
+        };
         checkMobile();
-        window.addEventListener('resize', checkMobile);
-        return () => window.removeEventListener('resize', checkMobile);
+        if (typeof window !== 'undefined') {
+            window.addEventListener('resize', checkMobile);
+        }
+        return () => {
+            if (typeof window !== 'undefined') {
+                window.removeEventListener('resize', checkMobile);
+            }
+        };
     }, []);
+
 
     useEffect(() => {
         if (typeof window !== 'undefined' && !mapRef.current) {
@@ -114,7 +126,10 @@ const EventMap = ({ events }: EventMapProps) => {
             </Button>
             <h3 className="text-lg font-semibold mb-2">{event.title}</h3>
             {event.imageUrl && (
-                <img src={event.imageUrl} alt={event.title} className="w-full h-32 object-cover mb-2 rounded" />
+                <Image src={event.imageUrl} alt={event.title} className="w-full h-32 object-cover mb-2 rounded"
+                    width={400}
+                    height={200}
+                />
             )}
             <p className="text-sm mb-2"><strong>Date:</strong> {format(new Date(event.event_date), 'dd MMMM yyyy à HH:mm', { locale: fr })}</p>
             <p className="text-sm mb-2"><strong>Lieu:</strong> {event.location}</p>

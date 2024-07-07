@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import EventList from "./_components/event-list"
 import { IEvent } from '@/types'
 import SearchFilter from './_components/search-filter'
@@ -43,7 +43,9 @@ export default function Events() {
                     <CardTitle>Rechercher des événements</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <SearchFilter onFilterChange={fetchEvents} />
+                    <Suspense fallback={<div className="space-y-4">{[...Array(3)].map((_, i) => (<Skeleton key={i} className="h-[200px] w-full" />))}</div>}>
+                        <SearchFilter onFilterChange={fetchEvents} />
+                    </Suspense>
                 </CardContent>
             </Card>
 
