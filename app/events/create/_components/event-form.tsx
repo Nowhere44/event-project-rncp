@@ -64,9 +64,10 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
     const selectedTags = watch('tags');
 
     const { isLoaded } = useLoadScript({
-        googleMapsApiKey: "AIzaSyBSn_yYew80D6BEGDN5vd37wZpmx4WAbsU",
+        googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string,
         libraries: ["places"],
     });
+
 
     useEffect(() => {
         const fetchTags = async () => {

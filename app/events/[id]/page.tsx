@@ -125,7 +125,7 @@ export default async function EventPage({ params, searchParams }: { params: { id
                                 </div>
                             </div>
 
-                            {isOwner && (
+                            {isOwner && new Date(event.event_date) > new Date() && (
                                 <div className="mt-6 flex space-x-3">
                                     <Link href={`/events/${params.id}/edit`}>
                                         <Button className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
@@ -171,7 +171,7 @@ export default async function EventPage({ params, searchParams }: { params: { id
                                 </div>
                             </div>
 
-                            {isOwner && event.is_paid && (
+                            {isOwner && event.is_paid && new Date(event.event_date) > new Date() && (
                                 <div className="bg-white shadow sm:rounded-lg mb-8">
                                     <div className="px-4 py-5 sm:p-6">
                                         <PromoCodeGenerator eventId={event.id} />
