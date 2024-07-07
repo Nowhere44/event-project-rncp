@@ -20,7 +20,7 @@ app.prepare().then(() => {
   const io = new Server(server, {
     path: "/api/socketio",
     cors: {
-      origin: "http://localhost:3000",
+      origin: "https://event-project-rncp.vercel.app/",
       methods: ["GET", "POST"],
     },
   });
