@@ -9,8 +9,6 @@ export async function middleware(req: NextRequest) {
 
     const { pathname } = req.nextUrl;
 
-    console.log("Current pathname:", pathname);  // Ajoutez ce log
-
     // Permettre les routes API et NextAuth
     if (pathname.startsWith(apiAuthPrefix)) {
         return NextResponse.next();
