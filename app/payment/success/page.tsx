@@ -14,6 +14,12 @@ export default function PaymentSuccessPage() {
     const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
     const [eventDetails, setEventDetails] = useState<any>(null);
     const searchParams = useSearchParams();
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
+
 
     useEffect(() => {
         const sessionId = searchParams.get('session_id');
@@ -37,6 +43,10 @@ export default function PaymentSuccessPage() {
             console.error('Erreur lors de la vérification du paiement:', error);
             setStatus('error');
         }
+    }
+
+    if (!isClient) {
+        return null;
     }
 
     return (
