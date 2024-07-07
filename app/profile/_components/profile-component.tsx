@@ -1,4 +1,3 @@
-// app/profile/_components/profile-component.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -75,7 +74,7 @@ export default function ProfileComponent({ userId, userData }: ProfileComponentP
     };
 
     const handleDelete = async () => {
-        if (window.confirm('Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.')) {
+        if (typeof window !== 'undefined' && window.confirm('Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.')) {
             try {
                 const response = await fetch(`/api/users/${userId}`, { method: 'DELETE' });
                 if (response.ok) {

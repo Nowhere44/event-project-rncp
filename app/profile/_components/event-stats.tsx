@@ -1,5 +1,5 @@
-// app/profile/_components/event-stats.tsx
 'use client';
+
 import { IEvent } from '@/types';
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
@@ -15,10 +15,20 @@ const EventStats = ({ events }: EventStatsProps) => {
     const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
-        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        const checkMobile = () => {
+            if (typeof window !== 'undefined') {
+                setIsMobile(window.innerWidth < 768);
+            }
+        };
         checkMobile();
-        window.addEventListener('resize', checkMobile);
-        return () => window.removeEventListener('resize', checkMobile);
+        if (typeof window !== 'undefined') {
+            window.addEventListener('resize', checkMobile);
+        }
+        return () => {
+            if (typeof window !== 'undefined') {
+                window.removeEventListener('resize', checkMobile);
+            }
+        };
     }, []);
 
     const eventRevenues = events.map(event => ({

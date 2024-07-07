@@ -41,7 +41,6 @@ const EventMap = ({ events }: EventMapProps) => {
         };
     }, []);
 
-
     useEffect(() => {
         if (typeof window !== 'undefined' && !mapRef.current) {
             mapRef.current = L.map('map', {
@@ -85,7 +84,7 @@ const EventMap = ({ events }: EventMapProps) => {
     }, [events, router, session]);
 
     const centerOnUserLocation = () => {
-        if ("geolocation" in navigator) {
+        if (typeof window !== 'undefined' && "geolocation" in navigator) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     const { latitude, longitude } = position.coords;
