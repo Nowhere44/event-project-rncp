@@ -1,3 +1,4 @@
+//app/page.tsx
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -7,12 +8,19 @@ import Link from 'next/link'
 import EventList from "./events/_components/event-list"
 import { IEvent } from '@/types'
 import SearchFilter from './events/_components/search-filter'
-import EventMap from './events/_components/event-map'
+import dynamic from 'next/dynamic'
+
+const EventMap = dynamic(() => import('./events/_components/event-map'), { ssr: false })
 
 export default function Home() {
   const [events, setEvents] = useState<IEvent[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const fetchEvents = useCallback(async (filters = {}) => {
     setIsLoading(true);
@@ -38,6 +46,9 @@ export default function Home() {
     fetchEvents({ limit: 6 });
   }, [fetchEvents]);
 
+  if (!isClient) {
+    return null; // ou un placeholder
+  }
 
   return (
     <div className="flex flex-col">

@@ -47,13 +47,6 @@ const SearchFilter: React.FC<SearchFilterProps> = ({ onFilterChange }) => {
         fetchTags()
     }, [])
 
-    const debouncedFilterChange = useCallback(
-        debounce((filters) => {
-            onFilterChange(filters);
-        }, 300),
-        [onFilterChange]
-    );
-
     useEffect(() => {
         const filters: any = {};
         if (query) filters.search = query;
