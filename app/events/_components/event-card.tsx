@@ -1,4 +1,3 @@
-import { formatDateTime } from '@/lib/utils'
 import Link from 'next/link'
 import React from 'react'
 import { IEvent } from '@/types'

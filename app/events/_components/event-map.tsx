@@ -121,7 +121,7 @@ const EventMap = ({ events }: EventMapProps) => {
             <p className="text-sm mb-2"><strong>Prix:</strong> {event.price ? `${event.price}€` : 'Gratuit'}</p>
             <p className="text-sm mb-4">{event.description}</p>
             <Button onClick={() => router.push(`/events/${event.id}`)}>
-                Voir l'événement
+                {`Voir l'événement`}
             </Button>
         </div>
     );

@@ -143,7 +143,7 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
             <TabsContent value="details">
                 <div className="space-y-6">
                     <div>
-                        <label htmlFor="title" className="block text-sm font-medium text-gray-700">Titre de l'événement</label>
+                        <label htmlFor="title" className="block text-sm font-medium text-gray-700">{`Titre de l'événement`}</label>
                         <Input
                             id="title"
                             {...register('title')}
@@ -164,7 +164,7 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                     </div>
 
                     <div>
-                        <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700">Image de l'événement</label>
+                        <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700">{`Image de l'événement`}</label>
                         <Input
                             id="imageUrl"
                             {...register('imageUrl')}
@@ -179,7 +179,7 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                     </div>
 
                     <div>
-                        <label htmlFor="event_date" className="block text-sm font-medium text-gray-700">Date de l'événement</label>
+                        <label htmlFor="event_date" className="block text-sm font-medium text-gray-700">{`Date de l'événement`}</label>
                         <div className='-ml-4'>
                             <Controller
                                 name="event_date"
@@ -260,7 +260,7 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
 
             <TabsContent value="location">
                 <div className='space-y-6'>
-                    <label htmlFor="location" className="block text-sm font-medium text-gray-700">Lieu de l'événement</label>
+                    <label htmlFor="location" className="block text-sm font-medium text-gray-700">{`Lieu de l'événement`}</label>
                     {isLoaded ? (
                         <input
                             id="location"

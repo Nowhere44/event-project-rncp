@@ -66,7 +66,7 @@ export default function PaymentSuccessPage() {
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p className="mb-4">Votre réservation pour l'événement "{eventDetails.title}" a été confirmée.</p>
+                    <p className="mb-4">{`Votre réservation pour l'événement "${eventDetails.title}" a été confirmée.`}</p>
                     <div className="space-y-2">
                         <p className="flex items-center">
                             <TicketIcon className="w-5 h-5 mr-2" />
@@ -87,13 +87,13 @@ export default function PaymentSuccessPage() {
                         )}
                         <p className="flex items-center">
                             <CalendarIcon className="w-5 h-5 mr-2" />
-                            <span className="font-medium">Date de l'événement :</span> {new Date(eventDetails.eventDate).toLocaleDateString()}
+                            <span className="font-medium">{`Date de l'événement :`}</span> {new Date(eventDetails.eventDate).toLocaleDateString()}
                         </p>
                     </div>
                 </CardContent>
                 <CardFooter>
                     <Link href={`/events/${eventDetails.eventId}`}>
-                        <Button>Voir les détails de l'événement</Button>
+                        <Button>{`Voir les détails de l'événement`}</Button>
                     </Link>
                 </CardFooter>
             </Card>

@@ -122,7 +122,7 @@ export default function RegisterForm() {
                 </div>
                 {error && <p className="text-red-500 text-center">{error}</p>}
                 <Button type="submit" className="w-full">
-                    S'inscrire
+                    {`S'inscrire`}
                 </Button>
             </form>
             <div className="mt-4 text-center text-sm">

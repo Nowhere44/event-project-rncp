@@ -1,6 +1,6 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from "@/auth.config";
-import EventForm from '/Users/charon/event-project/app/events/create/_components/event-form';
+import EventForm from '../../create/_components/event-form';
 import { redirect } from 'next/navigation';
 import { getEventById } from '@/actions/events/read';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,7 +22,7 @@ export default async function EditEventPage({ params }: { params: { id: string }
                     <CardHeader className="text-center">
                         <CardTitle className="text-3xl font-bold flex items-center justify-center">
                             <PencilIcon className="w-8 h-8 mr-2" />
-                            Modifier l'événement
+                            {`Modifier l'événement`}
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="p-6"> {/* Increased padding */}

@@ -81,9 +81,9 @@ export default function LoginForm() {
                 </Button>
             </form>
             <div className="mt-4 text-center text-sm">
-                Vous n'avez pas de compte ?{" "}
+                {`Vous n'avez pas de compte ?`}{" "}
                 <Link href="/register" className="underline">
-                    S'inscrire
+                    {`S'inscrire`}
                 </Link>
             </div>
         </div>
