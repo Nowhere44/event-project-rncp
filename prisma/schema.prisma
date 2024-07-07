@@ -161,6 +161,7 @@ model Message {
   userId    String
   type      String
   mentions  Mention[]
+  editableUntil DateTime
 }
 
 model Mention {
@@ -181,4 +182,5 @@ model PrivateMessage {
   createdAt  DateTime @default(now())
   sender     User     @relation("SentPrivateMessages", fields: [senderId], references: [id])
   receiver   User     @relation("ReceivedPrivateMessages", fields: [receiverId], references: [id])
+  editableUntil DateTime
 }

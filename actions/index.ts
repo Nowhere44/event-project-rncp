@@ -16,6 +16,8 @@ export * from './publicMessages/delete';
 
 export * from './privateMessages/create';
 export * from './privateMessages/read';
+export * from './privateMessages/delete';
+export * from './privateMessages/update';
 
 export * from './tags/create';
 export * from './tags/read';

@@ -1,7 +1,7 @@
 'use client'
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
-import io, { Socket } from 'socket.io-client';
+import { pusherClient } from '@/lib/pusher';
 import { Smile, Menu } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ interface Message {
         first_name: string;
     };
     createdAt: string;
+    editableUntil: string; // Nouveau champ
 }
 
 interface User {
@@ -38,62 +39,41 @@ const ChatPage = () => {
     const [showGifSearch, setShowGifSearch] = useState(false);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [suggestions, setSuggestions] = useState<User[]>([]);
-    const socketRef = useRef<Socket | null>(null);
     const [userNotifications, setUserNotifications] = useState<{ [key: string]: number }>({});
     const messagesEndRef = useRef<null | HTMLDivElement>(null);
 
+    const handleNewMessage = useCallback((message: Message) => {
+        setMessages((prev) => {
+            const messageExists = prev.some(m => m.id === message.id);
+            if (messageExists) return prev;
+            return [...prev, message];
+        });
+    }, []);
 
     useEffect(() => {
-        if (session?.user?.id && !socketRef.current) {
+        if (session?.user?.id) {
             fetchUsers();
             fetchMessages();
-            initSocket();
+            const channel = pusherClient.subscribe('chat');
+            channel.bind('message', handleNewMessage);
+            channel.bind('deleteMessage', handleDeleteMessage);
+            channel.bind('editMessage', handleEditMessage);
+
+            return () => {
+                pusherClient.unsubscribe('chat');
+            };
         }
+    }, [session, handleNewMessage]);
 
-        return () => {
-            if (socketRef.current) {
-                socketRef.current.disconnect();
-                socketRef.current = null;
-            }
-        };
-    }, [session]);
+    const handleDeleteMessage = useCallback((messageId: string) => {
+        setMessages(prev => prev.filter(msg => msg.id !== messageId));
+    }, []);
 
-    const initSocket = () => {
-        if (socketRef.current) return;
-
-        socketRef.current = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3000', {
-            path: '/api/socketio',
-        });
-
-        socketRef.current.on('connect', () => {
-            console.log('Connected to Socket.IO server');
-            socketRef.current?.emit('register', session?.user?.id);
-        });
-
-        socketRef.current.on('message', (message: Message) => {
-            console.log("Received message:", message);
-            setMessages(prev => [...prev, message]);
-        });
-
-        socketRef.current.on('deleteMessage', (messageId: string) => {
-            setMessages(prev => prev.filter(msg => msg.id !== messageId));
-        });
-
-        socketRef.current.on('editMessage', (editedMessage: Message) => {
-            setMessages(prev => prev.map(msg => msg.id === editedMessage.id ? editedMessage : msg));
-        });
-
-        socketRef.current.on('privateMessage', (message: any) => {
-            if (message.senderId !== session?.user?.id) {
-                setUserNotifications(prev => ({
-                    ...prev,
-                    [message.senderId]: (prev[message.senderId] || 0) + 1
-                }));
-            }
-        });
-    };
-
-
+    const handleEditMessage = useCallback((editedMessage: Message) => {
+        setMessages(prev => prev.map(msg =>
+            msg.id === editedMessage.id ? editedMessage : msg
+        ));
+    }, []);
 
     const fetchUsers = async () => {
         const response = await fetch('/api/users');
@@ -105,59 +85,95 @@ const ChatPage = () => {
 
     const fetchMessages = async () => {
         const response = await fetch('/api/public-messages/');
-        console.log("Fetching messages:", response);
         if (response.ok) {
             const data = await response.json();
             setMessages(data.map((message: any) => ({
                 ...message,
-                sender: message.user,
-                senderId: message.userId,
-                type: message.type,
+                senderId: message.userId,  // Assurez-vous que cela correspond à votre structure de données
+                sender: message.user,  // Assurez-vous que cela correspond à votre structure de données
+                type: message.type || 'text',  // Assurez-vous d'avoir un type par défaut
             })));
         }
     };
 
-    useEffect(() => {
-        if (session?.user?.id) {
-            fetchMessages();
-        }
-    }, [session]);
-
-
-    const sendMessage = (e: React.FormEvent) => {
+    const sendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!inputValue.trim() || !socketRef.current || !session?.user?.id) return;
-
-        const newMessage: Partial<Message> = {
+        if (!inputValue.trim() || !session?.user?.id) return;
+        const newMessage = {
             content: inputValue,
             senderId: session.user.id,
-            type: 'text',
+            type: 'text' as const,
+            sender: {
+                id: session.user.id,
+                first_name: session.user.firstName || ''
+            },
         };
-
-        console.log("Sending message:", newMessage);
-        socketRef.current.emit('message', newMessage);
         setInputValue('');
         setSuggestions([]);
-    };
 
-    const deleteMessage = (messageId: string) => {
-        socketRef.current?.emit('deleteMessage', messageId);
-    };
-
-    const editMessage = (messageId: string, newContent: string) => {
-        socketRef.current?.emit('editMessage', { id: messageId, content: newContent });
-    };
-
-    const sendGif = (gifUrl: string) => {
-        if (socketRef.current && session?.user?.id) {
-            const gifMessage: Partial<Message> = {
-                content: gifUrl,
-                senderId: session.user.id,
-                type: 'gif',
-            };
-            socketRef.current.emit('message', gifMessage);
+        try {
+            const response = await fetch('/api/public-messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newMessage),
+            });
+            if (!response.ok) {
+                throw new Error('Failed to send message');
+            }
+        } catch (error) {
+            console.error('Error sending message:', error);
         }
+    };
+
+    const deleteMessage = async (messageId: string) => {
+        try {
+            const response = await fetch(`/api/public-messages/${messageId}`, { method: 'DELETE' });
+            if (!response.ok) {
+                throw new Error('Failed to delete message');
+            }
+        } catch (error) {
+            console.error('Error deleting message:', error);
+        }
+    };
+
+    const editMessage = async (messageId: string, newContent: string) => {
+        try {
+            const response = await fetch(`/api/public-messages/${messageId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: newContent }),
+            });
+            if (!response.ok) {
+                throw new Error('Failed to edit message');
+            }
+        } catch (error) {
+            console.error('Error editing message:', error);
+        }
+    };
+
+    const sendGif = async (gifUrl: string) => {
+        if (!session?.user?.id) return;
+
+        const newMessage = {
+            content: gifUrl,
+            senderId: session.user.id,
+            type: 'gif' as const,
+        };
+
         setShowGifSearch(false);
+
+        try {
+            const response = await fetch('/api/public-messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newMessage),
+            });
+            if (!response.ok) {
+                throw new Error('Failed to send GIF');
+            }
+        } catch (error) {
+            console.error('Error sending GIF:', error);
+        }
     };
 
     const startPrivateChat = (user: User) => {
@@ -174,7 +190,7 @@ const ChatPage = () => {
             if (lastWord.startsWith('@')) {
                 const searchTerm = lastWord.slice(1);
                 const matches = users.filter(user =>
-                    user.id !== session?.user.id && // Exclure l'utilisateur actuel
+                    user.id !== session?.user?.id &&
                     user.first_name.toLowerCase().startsWith(searchTerm.toLowerCase())
                 );
                 setSuggestions(matches);
@@ -197,7 +213,6 @@ const ChatPage = () => {
 
     return (
         <div className="flex flex-1 overflow-hidden h-full">
-
             {/* Sidebar pour desktop */}
             <div className="hidden md:flex w-1/4 bg-white border-r border-gray-200 flex-col">
                 <UserList
@@ -266,10 +281,8 @@ const ChatPage = () => {
                                 value={inputValue}
                                 onChange={handleInputChange}
                                 placeholder="Type a message"
-
                             />
                         </div>
-
                         <Button type="submit">Send</Button>
                     </form>
                     {showGifSearch && (
@@ -298,7 +311,6 @@ const ChatPage = () => {
                     currentUserId={session.user.id}
                     otherUserId={selectedUser.id}
                     otherUserName={selectedUser.first_name}
-                    socket={socketRef.current}
                     onClose={() => setSelectedUser(null)}
                 />
             )}

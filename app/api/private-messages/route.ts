@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from "@/auth.config";
 import { createPrivateMessage, getPrivateMessages } from '@/actions';
+import { pusherServer } from '@/lib/pusher';
 
 export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions);
@@ -33,8 +34,16 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-        const { receiverId, content } = await request.json();
-        const newMessage = await createPrivateMessage(session.user.id, receiverId, content);
+        const { receiverId, content, type } = await request.json();
+        const newMessage = await createPrivateMessage(session.user.id, receiverId, content, type);
+        await pusherServer.trigger(`private-${receiverId}`, 'privateMessage', {
+            ...newMessage,
+            isOwnMessage: false
+        });
+        await pusherServer.trigger(`private-${session.user.id}`, 'privateMessage', {
+            ...newMessage,
+            isOwnMessage: true
+        });
         return NextResponse.json(newMessage, { status: 201 });
     } catch (error) {
         console.error('Error creating private message:', error);

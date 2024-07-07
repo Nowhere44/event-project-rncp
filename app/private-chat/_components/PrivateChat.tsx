@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Socket } from 'socket.io-client';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { pusherClient } from '@/lib/pusher';
 import MessageItem from '@/app/(Messagerie)/chat/_components/MessageItem';
 import GifSearch from '@/app/(Messagerie)/chat/_components/GifSearch';
 import { Send, Smile, X } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 
 interface PrivateMessage {
     id: string;
@@ -14,27 +15,23 @@ interface PrivateMessage {
         id: string;
         first_name: string;
     };
+    createdAt: string;
+    editableUntil: string;
 }
 
 interface PrivateChatProps {
     currentUserId: string;
     otherUserId: string;
     otherUserName: string;
-    socket: Socket | null;
     onClose: () => void;
 }
 
-const PrivateChat: React.FC<PrivateChatProps> = ({ currentUserId, otherUserId, otherUserName, socket, onClose }) => {
+const PrivateChat: React.FC<PrivateChatProps> = ({ currentUserId, otherUserId, otherUserName, onClose }) => {
     const [messages, setMessages] = useState<PrivateMessage[]>([]);
     const [inputValue, setInputValue] = useState('');
     const [showGifSearch, setShowGifSearch] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        fetchPrivateMessages();
-        setupSocketListeners();
-        return () => removeSocketListeners();
-    }, [otherUserId, socket]);
+    const { data: session } = useSession();
 
     useEffect(() => {
         scrollToBottom();
@@ -54,27 +51,24 @@ const PrivateChat: React.FC<PrivateChatProps> = ({ currentUserId, otherUserId, o
         }
     };
 
-    const setupSocketListeners = () => {
-        if (socket) {
-            socket.on('privateMessage', handleNewMessage);
-            socket.on('deletePrivateMessage', handleDeleteMessage);
-            socket.on('editPrivateMessage', handleEditMessage);
-        }
-    };
 
-    const removeSocketListeners = () => {
-        if (socket) {
-            socket.off('privateMessage', handleNewMessage);
-            socket.off('deletePrivateMessage', handleDeleteMessage);
-            socket.off('editPrivateMessage', handleEditMessage);
-        }
-    };
-
-    const handleNewMessage = (message: PrivateMessage) => {
+    const handleNewMessage = useCallback((message: PrivateMessage) => {
         if (message.senderId === otherUserId || message.receiverId === otherUserId) {
             setMessages(prevMessages => [...prevMessages, message]);
         }
-    };
+    }, [otherUserId]);
+
+    useEffect(() => {
+        fetchPrivateMessages();
+        const channel = pusherClient.subscribe(`private-${currentUserId}`);
+        channel.bind('privateMessage', handleNewMessage);
+        channel.bind('deletePrivateMessage', handleDeleteMessage);
+        channel.bind('editPrivateMessage', handleEditMessage);
+
+        return () => {
+            pusherClient.unsubscribe(`private-${currentUserId}`);
+        };
+    }, [currentUserId, otherUserId, handleNewMessage]);
 
     const handleDeleteMessage = (messageId: string) => {
         setMessages(prev => prev.filter(msg => msg.id !== messageId));
@@ -84,40 +78,110 @@ const PrivateChat: React.FC<PrivateChatProps> = ({ currentUserId, otherUserId, o
         setMessages(prev => prev.map(msg => msg.id === editedMessage.id ? editedMessage : msg));
     };
 
-    const sendMessage = (e: React.FormEvent) => {
+    const sendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!inputValue.trim() || !socket) return;
+        if (!inputValue.trim()) return;
 
-        const newMessage = {
+        const now = new Date();
+        const editableUntil = new Date(now.getTime() + 30 * 1000);
+
+        const newMessage: PrivateMessage = {
             content: inputValue,
-            type: 'text' as const,
+            type: 'text',
             senderId: currentUserId,
             receiverId: otherUserId,
+            id: 'temp-' + Date.now(),
+            sender: { id: currentUserId, first_name: session?.user?.firstName || '' },
+            createdAt: now.toISOString(),
+            editableUntil: editableUntil.toISOString()
         };
-
-        socket.emit('privateMessage', newMessage);
+        setMessages((prevMessages) => [...prevMessages, newMessage]);
         setInputValue('');
+
+        try {
+            const response = await fetch('/api/private-messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newMessage),
+            });
+            if (!response.ok) {
+                throw new Error('Failed to send message');
+            }
+            const savedMessage = await response.json();
+            setMessages(prev => prev.map(msg =>
+                msg.id === newMessage.id ? savedMessage : msg
+            ));
+        } catch (error) {
+            console.error('Error sending private message:', error);
+            setMessages(prev => prev.filter(msg => msg.id !== newMessage.id));
+        }
     };
 
-    const deleteMessage = (messageId: string) => {
-        socket?.emit('deletePrivateMessage', { messageId, receiverId: otherUserId });
+    const deleteMessage = async (messageId: string) => {
+        try {
+            const response = await fetch(`/api/private-messages/${messageId}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ receiverId: otherUserId }),
+            });
+            if (!response.ok) {
+                throw new Error('Failed to delete message');
+            }
+            // La suppression locale du message est gérée par le gestionnaire d'événements Pusher
+        } catch (error) {
+            console.error('Error deleting private message:', error);
+        }
     };
 
-    const editMessage = (messageId: string, newContent: string) => {
-        socket?.emit('editPrivateMessage', { id: messageId, content: newContent, receiverId: otherUserId });
+    const editMessage = async (messageId: string, newContent: string) => {
+        try {
+            const response = await fetch(`/api/private-messages/${messageId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: newContent, receiverId: otherUserId }),
+            });
+            if (!response.ok) {
+                throw new Error('Failed to edit message');
+            }
+            // La modification locale du message est gérée par le gestionnaire d'événements Pusher
+        } catch (error) {
+            console.error('Error editing private message:', error);
+        }
     };
 
-    const sendGif = (gifUrl: string) => {
-        if (socket) {
-            const newMessage = {
-                content: gifUrl,
-                type: 'gif' as const,
-                senderId: currentUserId,
-                receiverId: otherUserId,
-            };
+    const sendGif = async (gifUrl: string) => {
+        const now = new Date();
+        const editableUntil = new Date(now.getTime() + 30 * 1000);
 
-            socket.emit('privateMessage', newMessage);
+        const newMessage: PrivateMessage = {
+            content: gifUrl,
+            type: 'gif',
+            senderId: currentUserId,
+            receiverId: otherUserId,
+            id: 'temp-' + Date.now(),
+            sender: { id: currentUserId, first_name: session?.user?.firstName || '' },
+            createdAt: now.toISOString(),
+            editableUntil: editableUntil.toISOString()
+        };
+        setMessages(prev => [...prev, newMessage]);
+
+        try {
+            const response = await fetch('/api/private-messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newMessage),
+            });
+            if (!response.ok) {
+                throw new Error('Failed to send GIF');
+            }
+            const savedMessage = await response.json();
+            setMessages(prev => prev.map(msg =>
+                msg.id === newMessage.id ? savedMessage : msg
+            ));
             setShowGifSearch(false);
+        } catch (error) {
+            console.error('Error sending GIF:', error);
+            setMessages(prev => prev.filter(msg => msg.id !== newMessage.id));
         }
     };
 

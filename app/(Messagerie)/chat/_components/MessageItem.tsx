@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Edit2, Trash2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import Image from 'next/image';
@@ -7,16 +7,14 @@ interface MessageItemProps {
     message: {
         id: string;
         content: string;
-        type: 'text' | 'gif' | 'public';
-        sender?: {
-            id: string;
-            first_name: string;
-        };
-        user?: {
-            id: string;
-            first_name: string;
-        };
         senderId: string;
+        type: 'text' | 'gif' | 'public';
+        sender: {
+            id: string;
+            first_name: string;
+        };
+        createdAt: string;
+        editableUntil: string;
     };
     currentUserId: string;
     onDelete: (messageId: string) => void;
@@ -26,6 +24,20 @@ interface MessageItemProps {
 const MessageItem: React.FC<MessageItemProps> = ({ message, currentUserId, onDelete, onEdit }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(message.content);
+    const [canEditOrDelete, setCanEditOrDelete] = useState(false);
+
+    useEffect(() => {
+        const checkEditability = () => {
+            const now = new Date();
+            const editableUntil = new Date(message.editableUntil);
+            setCanEditOrDelete(now < editableUntil);
+        };
+
+        checkEditability();
+        const timer = setInterval(checkEditability, 1000); // Vérifier chaque seconde
+
+        return () => clearInterval(timer);
+    }, [message.editableUntil]);
 
     const handleEdit = () => {
         if (editContent.trim() !== message.content) {
@@ -34,15 +46,14 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, currentUserId, onDel
         setIsEditing(false);
     };
 
-    const senderName = message.sender?.first_name || message.user?.first_name || "Unknown";
     const isOwnMessage = message.senderId === currentUserId;
 
     return (
-        <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[70%] ${isOwnMessage ? 'bg-blue-500 text-white' : 'bg-white'} rounded-lg p-3 shadow-sm`}>
-                {!isOwnMessage && <p className="text-xs font-semibold mb-1">{senderName}</p>}
+        <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-4`}>
+            <div className={`max-w-[70%] ${isOwnMessage ? 'bg-blue-500 text-white' : 'bg-gray-200'} rounded-lg p-3 shadow-sm`}>
+                {!isOwnMessage && <p className="text-xs font-semibold mb-1">{message.sender.first_name}</p>}
                 {message.type === 'gif' ? (
-                    <Image src={message.content} alt="GIF" className="max-w-full rounded" width={100} height={100} />
+                    <Image src={message.content} alt="GIF" width={200} height={200} className="max-w-full rounded" />
                 ) : isEditing ? (
                     <input
                         type="text"
@@ -57,7 +68,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, currentUserId, onDel
                     <p>{message.content}</p>
                 )}
             </div>
-            {isOwnMessage && !isEditing && (
+            {isOwnMessage && !isEditing && canEditOrDelete && (
                 <div className="ml-2 flex flex-col justify-center">
                     <Button onClick={() => setIsEditing(true)} variant="ghost" size="icon" className="h-6 w-6">
                         <Edit2 className="h-4 w-4" />

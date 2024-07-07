@@ -65,7 +65,6 @@ const PrivateChatPage = () => {
             currentUserId={session.user.id}
             otherUserId={otherUser.id}
             otherUserName={otherUser.first_name}
-            socket={socketRef.current}
             onClose={() => router.push('/chat')}
         />
     );

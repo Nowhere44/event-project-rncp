@@ -51,6 +51,8 @@ const GifSearch: React.FC<GifSearchProps> = ({ onSend, onClose }) => {
                         alt="GIF"
                         className="w-full h-auto object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
                         onClick={() => onSend(gif.images.original.url)}
+                        width={200}
+                        height={200}
                     />
                 ))}
             </div>
