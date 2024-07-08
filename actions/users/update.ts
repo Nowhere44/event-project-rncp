@@ -10,6 +10,7 @@ export const updateUser = async (id: string, userData: {
     email?: string;
     profile_picture?: string;
     date_of_birth?: Date;
+    description?: string;
 }) => {
     try {
         const updatedUser = await prisma.user.update({

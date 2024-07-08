@@ -232,6 +232,7 @@ export interface IUser {
     role: string;
     totalRevenue?: number;
     date_of_birth?: Date;
+    description?: string;
 
 }
 

@@ -6,6 +6,8 @@ import { getServerSession } from "next-auth/next";
 import { getUserById } from '@/actions/users/read';
 import { authOptions } from "@/auth.config";
 import { revalidatePath } from "next/cache";
+import { writeFile } from 'fs/promises';
+import path from 'path';
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
     const session = await getServerSession(authOptions);
@@ -14,14 +16,36 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     }
 
     try {
-        const body = await req.json();
-        const updatedUser = await updateUser(params.id, {
-            first_name: body.firstName,
-            last_name: body.lastName,
-            email: body.email,
-            profile_picture: body.image,
-            date_of_birth: body.dateOfBirth ? new Date(body.dateOfBirth) : undefined,
-        });
+        const formData = await req.formData();
+        const userData: any = {
+            first_name: formData.get('firstName') as string,
+            last_name: formData.get('lastName') as string,
+            email: formData.get('email') as string,
+            date_of_birth: formData.get('dateOfBirth') ? new Date(formData.get('dateOfBirth') as string) : undefined,
+            description: formData.get('description') as string,
+        };
+
+        const profilePicture = formData.get('profile_picture') as File | null;
+        if (profilePicture) {
+            const bytes = await profilePicture.arrayBuffer();
+            const buffer = Buffer.from(bytes);
+
+            // Créer un nom de fichier unique
+            const fileName = `${Date.now()}-${profilePicture.name}`;
+            const filePath = path.join(process.cwd(), 'public', 'uploads', fileName);
+
+            // Écrire le fichier
+            await writeFile(filePath, buffer);
+
+            // Mettre à jour l'URL de l'image de profil
+            userData.profile_picture = `/uploads/${fileName}`;
+        }
+
+        const updatedUser = await updateUser(params.id, userData);
+        if (!updatedUser) {
+            return NextResponse.json({ error: "Failed to update user" }, { status: 400 });
+        }
+
         revalidatePath(`/profile/${params.id}`);
         return NextResponse.json(updatedUser, { status: 200 });
     } catch (error) {
@@ -29,7 +53,6 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
-
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
     const session = await getServerSession(authOptions);
     if (!session || !session.user || session.user.id !== params.id) {

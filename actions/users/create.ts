@@ -10,6 +10,7 @@ export const createUser = async (userData: {
     last_name: string;
     date_of_birth?: string;
     profile_picture?: string;
+    description?: string;
     role?: Role;
 }) => {
     try {

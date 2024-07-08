@@ -26,6 +26,7 @@ model User {
   last_name             String
   email                 String           @unique
   emailVerified         DateTime?
+   description          String?
   password              String
   date_of_birth         DateTime?
   profile_picture       String?
