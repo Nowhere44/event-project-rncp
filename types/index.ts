@@ -165,6 +165,7 @@ export interface IEvent {
     updated_at: Date;
     latitude: number;
     longitude: number;
+    averageRating?: number;
     tags?: {
         tag: {
             id: string;

@@ -22,7 +22,7 @@ interface Message {
         first_name: string;
     };
     createdAt: string;
-    editableUntil: string; // Nouveau champ
+    editableUntil: string;
 }
 
 interface User {
@@ -89,9 +89,9 @@ const ChatPage = () => {
             const data = await response.json();
             setMessages(data.map((message: any) => ({
                 ...message,
-                senderId: message.userId,  // Assurez-vous que cela correspond à votre structure de données
-                sender: message.user,  // Assurez-vous que cela correspond à votre structure de données
-                type: message.type || 'text',  // Assurez-vous d'avoir un type par défaut
+                senderId: message.userId,
+                sender: message.user,
+                type: message.type || 'text',
             })));
         }
     };

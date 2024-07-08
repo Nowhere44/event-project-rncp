@@ -61,12 +61,25 @@ export default async function EventPage({ params, searchParams }: { params: { id
                                     <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">{event.title}</h1>
                                     <div className="mt-4 flex items-center space-x-2">
                                         <ReadOnlyRatingStars rating={event.averageRating || 0} />
-                                        <span className="text-sm text-gray-500">({event.averageRating?.toFixed(1) || 'N/A'})</span>
+                                        <span className="text-sm text-gray-500">
+                                            ({event.averageRating?.toFixed(1) || 'N/A'}) - {event.commentsCount} avis
+                                        </span>
                                     </div>
                                     <p className="mt-4 text-lg text-gray-500">{event.description}</p>
                                 </div>
                                 <div className="border-t border-gray-200 px-4 py-5 sm:p-0">
                                     <dl className="sm:divide-y sm:divide-gray-200">
+                                        <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5 sm:px-6">
+                                            <dt className="text-sm font-medium text-gray-500 flex items-center">
+                                                <UsersIcon className="mr-1.5 h-5 w-5 flex-shrink-0 text-gray-400" />
+                                                Organisateur
+                                            </dt>
+                                            <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+                                                <Link href='/events/creator/[id]' as={`/events/creator/${event.userId}`} className='hover:underline hover:text-blue-500'>
+                                                    {event.user.first_name} {event.user.last_name}
+                                                </Link>
+                                            </dd>
+                                        </div>
                                         <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5 sm:px-6">
                                             <dt className="text-sm font-medium text-gray-500 flex items-center">
                                                 <CalendarDaysIcon className="mr-1.5 h-5 w-5 flex-shrink-0 text-gray-400" />
@@ -98,7 +111,7 @@ export default async function EventPage({ params, searchParams }: { params: { id
                                                 Capacité
                                             </dt>
                                             <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                                                {event.availableTickets} / {event.capacity} places
+                                                {event.availableTickets} / {event.capacity} places disponibles
                                             </dd>
                                         </div>
                                         <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5 sm:px-6">

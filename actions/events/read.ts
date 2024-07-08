@@ -1,5 +1,8 @@
+//actions/events/read.ts
 import { prisma } from "@/server/db";
 import { ReservationStatus } from "@prisma/client";
+import { connectToDatabase } from "@/lib/database";
+import Rating from "@/lib/database/models/rating.model";
 
 export async function getEventById(id: string) {
     const event = await prisma.event.findUnique({
@@ -24,13 +27,16 @@ export async function getEventById(id: string) {
     });
 
     if (event) {
+        await connectToDatabase();
+        const commentsCount = await Rating.countDocuments({ eventId: id });
         const simplifiedTags = event.tags.map(et => et.tag.name);
         const reservedTickets = event.reservations.reduce((sum, res) => sum + res.numberOfTickets, 0);
         const availableTickets = Math.max(0, event.capacity - reservedTickets);
         return {
             ...event,
             simplifiedTags,
-            availableTickets
+            availableTickets,
+            commentsCount
         };
     }
     return event;
