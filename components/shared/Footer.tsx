@@ -1,7 +1,7 @@
 import Image from "next/image"
 import Link from "next/link"
 
-export const Footer = () => {
+const Footer = () => {
     return (
         <footer className="bg-white border-t">
             <div className="wrapper flex flex-col md:flex-row justify-between items-center gap-4 py-8 px-6 md:px-10">
@@ -20,3 +20,5 @@ export const Footer = () => {
         </footer>
     )
 }
+
+export default Footer

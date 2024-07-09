@@ -7,7 +7,7 @@ import { Button } from '../ui/button';
 import NavItems from './NavItems';
 import MobileNav from './MobileNav';
 
-export const Header = () => {
+const Header = () => {
     const { data: session, status } = useSession();
 
     return (
@@ -52,3 +52,5 @@ export const Header = () => {
         </header>
     );
 };
+
+export default Header;
