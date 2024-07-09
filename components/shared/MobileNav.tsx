@@ -33,13 +33,6 @@ const MobileNav = () => {
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col gap-6 bg-white md:hidden z-[1006]">
                 <div className='flex gap-2 items-center'>
-                    <Image
-                        src="/assets/images/diamond-removebg-preview.png"
-                        alt="logo"
-                        width={40}
-                        height={40}
-                        className="h-12 w-12"
-                    />
                     <h1 className='text-2xl font-bold text-orange-500'>Evy</h1>
                 </div>
 
