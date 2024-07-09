@@ -1,3 +1,4 @@
+// MobileNav.tsx
 import { useState } from 'react';
 import {
     Sheet,
@@ -10,6 +11,7 @@ import NavItems from "./NavItems"
 import { Menu } from 'lucide-react'
 import { Button } from "../ui/button"
 import { signOut } from 'next-auth/react'
+import { motion } from 'framer-motion';
 
 const MobileNav = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -25,7 +27,9 @@ const MobileNav = () => {
     return (
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger className="align-middle md:hidden">
-                <Menu size={24} />
+                <motion.div whileTap={{ scale: 0.9 }}>
+                    <Menu size={28} className="text-orange-600" />
+                </motion.div>
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col gap-6 bg-white md:hidden z-[1006]">
                 <div className='flex gap-2 items-center'>
@@ -36,7 +40,7 @@ const MobileNav = () => {
                         height={40}
                         className="h-12 w-12"
                     />
-                    <h1 className='font-bold'>Evy</h1>
+                    <h1 className='text-2xl font-bold text-orange-500'>Evy</h1>
                 </div>
 
                 <Separator className="border border-gray-200" />
@@ -46,11 +50,12 @@ const MobileNav = () => {
                 <div>
                     <Button
                         variant='default'
-                        size="sm"
+                        size="lg"
                         onClick={() => {
                             handleLogout();
                             closeSheet();
                         }}
+                        className="w-full bg-orange-500 hover:bg-orange-600 text-white"
                     >
                         Déconnexion
                     </Button>

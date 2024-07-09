@@ -62,7 +62,7 @@ const EventMap = ({ events }: EventMapProps) => {
                     const marker = L.marker([event.latitude, event.longitude], {
                         icon: L.divIcon({
                             className: 'event-marker',
-                            html: '🏢',
+                            html: '📍',
                             iconSize: [30, 30],
                             iconAnchor: [15, 30],
                         })

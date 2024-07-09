@@ -16,14 +16,8 @@ export const metadata: Metadata = {
     title: "Evy - La Plateforme d'Événements Innovante",
     description: "Découvrez, créez et participez à des événements uniques avec Evy. Votre prochaine expérience mémorable est à portée de clic.",
     images: [{
-      url: '/images/evy-og-image.jpg', width: 1200, height: 630, alt: `Evy - Plateforme d'événements`
+      url: 'https://cdn.discordapp.com/attachments/1260248323760328820/1260306824339521606/gamer120857_Ultra-minimalist_logo_for_an_event_management_app.__918374bb-4006-4de4-a22e-7517497fdb6b.png?ex=668ed7b2&is=668d8632&hm=9febd9af68e575cfc56304b52046f159a5e159e1376245014f018a7b4b7b8de3&', width: 1200, height: 630, alt: `Evy - Plateforme d'événements`
     }],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: "Evy - Révolutionnez vos Événements",
-    description: "Rejoignez Evy pour découvrir et créer des événements exceptionnels dans votre région.",
-    images: ['/images/evy-twitter-image.jpg'],
   },
 }
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

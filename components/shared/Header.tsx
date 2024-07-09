@@ -1,3 +1,4 @@
+// Header.tsx
 "use client"
 import { useSession, signOut } from 'next-auth/react';
 import Image from 'next/image';
@@ -12,37 +13,32 @@ const Header = () => {
 
     return (
         <header className='w-full border-b bg-white shadow-sm sticky top-0 z-[1005]'>
-            <div className='wrapper flex items-center justify-between py-4 px-6 md:px-10'>
+            <div className='max-w-7xl mx-auto flex items-center justify-between py-4 px-6 md:px-10'>
                 <Link href="/" className='flex items-center space-x-2'>
-                    <Image
-                        src="/assets/images/diamond-removebg-preview.png"
-                        width={40}
-                        height={40}
-                        alt='Event logo'
-                        className="w-auto h-10"
-                    />
-                    <span className="text-xl font-bold text-gray-800">Evy</span>
+                    <span className="text-2xl font-bold text-orange-500">Evy</span>
                 </Link>
 
                 {status === 'authenticated' ? (
                     <>
-                        <nav className='hidden md:flex items-center space-x-6'>
+                        <nav className='hidden md:flex items-center space-x-8'>
                             <NavItems />
                         </nav>
                         <div className='flex items-center space-x-4'>
-                            <div className='hidden md:block'>                      <Button
-                                variant='default'
-                                size="sm"
-                                onClick={() => signOut({ callbackUrl: '/' })}
-                            >
-                                Déconnexion
-                            </Button></div>
-
+                            <div className='hidden md:block'>
+                                <Button
+                                    variant='default'
+                                    size="lg"
+                                    onClick={() => signOut({ callbackUrl: '/' })}
+                                    className="bg-orange-500 hover:bg-orange-600 text-white"
+                                >
+                                    Déconnexion
+                                </Button>
+                            </div>
                             <MobileNav />
                         </div>
                     </>
                 ) : (
-                    <Button asChild variant='default' size="sm">
+                    <Button asChild variant='default' size="lg" className="bg-orange-500 hover:bg-orange-600 text-white">
                         <Link href="/login">
                             Connexion
                         </Link>

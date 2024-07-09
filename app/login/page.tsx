@@ -9,7 +9,7 @@ export default function LoginPage() {
             </div>
             <div className="hidden bg-muted lg:block">
                 <Image
-                    src="https://images.unsplash.com/photo-1507878866276-a947ef722fee?q=80&w=2071&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                    src="https://cdn.discordapp.com/attachments/1260248323760328820/1260303163928350740/gamer120857_A_vibrant_and_engaging_illustration_for_an_event_ma_8612a233-c8f2-4d5c-8291-f64da80520c4.png?ex=668ed449&is=668d82c9&hm=68f56029cd29065a2b3e8b06301ccc34a3ffb1775184dbcca91667af9848c9f5&"
                     alt="Image"
                     width="1920"
                     height="1080"
