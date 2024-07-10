@@ -54,7 +54,10 @@ export async function getUserEvents(userId: string) {
                         select: {
                             id: true,
                             first_name: true,
-                            last_name: true
+                            last_name: true,
+                            date_of_birth: true,
+                            email: true,
+                            profile_picture: true
                         }
                     }
                 }

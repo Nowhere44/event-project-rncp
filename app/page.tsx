@@ -34,7 +34,7 @@ export default function Home() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      setEvents(data.events.slice(0, 6));
+      setEvents(data.events);
       setTotalPages(data.totalPages);
       setNumberTotalEvents(data.events.length);
     } catch (error) {
@@ -91,7 +91,7 @@ export default function Home() {
                 className="rounded-2xl shadow-2xl object-cover"
               />
               <div className="absolute -bottom-6 -right-6 bg-white p-4 rounded-lg shadow-lg">
-                <p className="text-orange-500 font-semibold">{`+${numberTotalEvents} événements ce mois-ci`}</p>
+                <p className="text-orange-500 font-semibold">{`+${events.length} événements ce mois-ci`}</p>
               </div>
             </motion.div>
           </motion.div>

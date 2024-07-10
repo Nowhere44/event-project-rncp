@@ -274,3 +274,18 @@ body {
 .react-datepicker__time-list-item--selected {
   background-color: #624cf5 !important;
 }
+
+.datepicker-container {
+  display: block;
+  width: 100%;
+}
+
+.datepicker-container .react-datepicker-wrapper,
+.datepicker-container .react-datepicker__input-container {
+  display: block;
+  width: 100%;
+}
+
+.datepicker-container .react-datepicker__input-container input {
+  width: 100%;
+}

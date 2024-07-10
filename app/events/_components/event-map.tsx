@@ -83,6 +83,8 @@ const EventMap = ({ events }: EventMapProps) => {
         };
     }, [events, router, session]);
 
+    console.log("events", events)
+
     const centerOnUserLocation = () => {
         if (typeof window !== 'undefined' && "geolocation" in navigator) {
             navigator.geolocation.getCurrentPosition(

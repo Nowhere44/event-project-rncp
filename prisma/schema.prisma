@@ -26,7 +26,7 @@ model User {
   last_name             String
   email                 String           @unique
   emailVerified         DateTime?
-   description          String?
+  description          String?
   password              String
   date_of_birth         DateTime?
   profile_picture       String?
@@ -42,7 +42,7 @@ model User {
   mentions              Mention[]
   sentPrivateMessages   PrivateMessage[] @relation("SentPrivateMessages")
   receivedPrivateMessages PrivateMessage[] @relation("ReceivedPrivateMessages")
-   usedPromoCodes PromoCode[]
+  usedPromoCodes PromoCode[]
 }
 
 model Account {
@@ -130,6 +130,7 @@ model Reservation {
   status          ReservationStatus @default(Pending)
   appliedPromoCode String? 
   stripeSessionId String? @unique
+    createdAt DateTime @default(now())
 }
 
 enum ReservationStatus {

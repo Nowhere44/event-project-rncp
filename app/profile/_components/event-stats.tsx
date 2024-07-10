@@ -42,8 +42,8 @@ const EventStats = ({ events }: EventStatsProps) => {
             {
                 label: 'Revenus (€)',
                 data: eventRevenues.map(event => event.revenue),
-                backgroundColor: 'rgba(59, 130, 246, 0.6)',
-                borderColor: 'rgba(59, 130, 246, 1)',
+                backgroundColor: 'rgba(249, 115, 22, 0.6)',
+                borderColor: 'rgba(249, 115, 22, 1)',
                 borderWidth: 1,
             },
         ],

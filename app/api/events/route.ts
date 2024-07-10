@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from "@/auth.config";
 import { createEvent, getEvents } from '@/actions';
+import { uploadToS3 } from '@/lib/s3Upload';
 
 export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions);
@@ -11,7 +12,15 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-        const eventData = await req.json();
+        const formData = await req.formData();
+        const eventData: any = Object.fromEntries(formData);
+
+        const imageFile = formData.get('image') as File | null;
+        if (imageFile) {
+            const uploadedImageUrl = await uploadToS3(imageFile);
+            eventData.imageUrl = uploadedImageUrl;
+        }
+
         const event = await createEvent(eventData, session.user.id);
         return NextResponse.json(event, { status: 201 });
     } catch (error) {

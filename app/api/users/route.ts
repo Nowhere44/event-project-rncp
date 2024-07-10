@@ -4,7 +4,7 @@ import { getUserByEmail, getAllUsers } from '@/actions/users/read';
 import { createUser } from '@/actions/users/create';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from "@/auth.config";
-import { uploadProfilePicture } from '@/lib/fileUpload';
+import { uploadToS3 } from '@/lib/s3Upload';
 
 export async function POST(req: NextRequest) {
     try {
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
 
         let profile_picture = profilePictureUrl;
         if (profilePicture) {
-            profile_picture = await uploadProfilePicture(profilePicture);
+            profile_picture = await uploadToS3(profilePicture);
         }
 
         const newUser = await createUser({

@@ -34,6 +34,8 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
     const [newTag, setNewTag] = useState('');
     const router = useRouter();
     const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
 
     const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm({
         resolver: zodResolver(eventSchema),
@@ -87,10 +89,23 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
     const onSubmit = async (data: any) => {
         setIsSubmitting(true);
         try {
+            const formData = new FormData();
+            Object.keys(data).forEach(key => {
+                if (key !== 'imageUrl') {
+                    formData.append(key, data[key]);
+                }
+            });
+            formData.append('userId', userId);
+
+            if (imageFile) {
+                formData.append('image', imageFile);
+            } else if (data.imageUrl) {
+                formData.append('imageUrl', data.imageUrl);
+            }
+
             const response = await fetch(`/api/events${eventId ? `/${eventId}` : ''}`, {
                 method: eventId ? 'PUT' : 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...data, userId }),
+                body: formData,
             });
 
             if (!response.ok) {
@@ -106,6 +121,7 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
             setIsSubmitting(false);
         }
     };
+
 
     const handleAddTag = async () => {
         if (newTag.trim() !== '') {
@@ -138,6 +154,18 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
         }
     };
 
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setImageFile(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
             <TabsContent value="details">
@@ -164,17 +192,25 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                     </div>
 
                     <div>
-                        <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700">{`Image de l'événement`}</label>
-                        <Input
-                            id="imageUrl"
-                            {...register('imageUrl')}
-                            placeholder="URL de l'image de l'événement"
-                        />
+                        <label htmlFor="image" className="block text-sm font-medium text-gray-700">{`Image de l'événement`}</label>
+                        <div className="mt-1">
+                            <Input
+                                id="imageFile"
+                                type="file"
+                                onChange={handleImageChange}
+                                accept="image/*"
+                            />
+                            <span className="text-sm text-gray-500">ou</span>
+                            <Input
+                                id="imageUrl"
+                                {...register('imageUrl')}
+                                placeholder="URL de l'image de l'événement"
+                            />
+                        </div>
                         {errors.imageUrl && <p className="mt-1 text-sm text-red-600">{errors.imageUrl.message as string}</p>}
-                        {watch('imageUrl') && (
+                        {(imagePreview || watch('imageUrl')) && (
                             <div className="mt-2">
-                                <Image src={watch('imageUrl')} alt="Event image" width={200} height={200} className="rounded-lg"
-                                />
+                                <Image src={imagePreview || watch('imageUrl')} alt="Event image preview" width={200} height={200} className="rounded-lg" />
                             </div>
                         )}
                     </div>
@@ -330,7 +366,7 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                             placeholder="Nouveau tag"
                             className="flex-grow"
                         />
-                        <Button type="button" onClick={handleAddTag} className="whitespace-nowrap">
+                        <Button type="button" onClick={handleAddTag} className="whitespace-nowrap bg-orange-500">
                             Ajouter
                         </Button>
                     </div>
@@ -374,7 +410,7 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                 <Button type="button" onClick={() => router.back()} variant="outline">
                     Annuler
                 </Button>
-                <Button type="submit" disabled={isSubmitting} className="px-6 py-2">
+                <Button type="submit" disabled={isSubmitting} className="px-6 py-2 bg-orange-500">
                     {isSubmitting ? 'Envoi en cours...' : eventId ? 'Mettre à jour' : 'Créer l\'événement'}
                 </Button>
             </div>

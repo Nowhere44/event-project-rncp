@@ -9,10 +9,14 @@ import { useEffect, useState } from 'react';
 import { IEvent, IReservation, IUser } from '@/types';
 import EventStats from '../_components/event-stats';
 import Link from 'next/link';
-import { CalendarIcon } from '@heroicons/react/24/outline';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Image from 'next/image';
+import { format, differenceInYears } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { Button } from "@/components/ui/button";
+import * as XLSX from 'xlsx';
+import { CalendarIcon, TicketIcon, CurrencyEuroIcon, EnvelopeIcon, ClockIcon, TagIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 
 export default function ProfilePage() {
     const { data: session, status } = useSession();
@@ -49,6 +53,33 @@ export default function ProfilePage() {
         fetchUserData();
     }, [id, session]);
 
+    const formatDate = (date: any) => {
+        return format(new Date(date), "EEEE d MMMM yyyy 'à' HH:mm", { locale: fr });
+    };
+
+    const calculateAge = (birthDate: any) => {
+        if (!birthDate) return "N/A";
+        return differenceInYears(new Date(), new Date(birthDate));
+    };
+
+    const exportToExcel = () => {
+        const workbook = XLSX.utils.book_new();
+        userEvents.forEach(event => {
+            const worksheet = XLSX.utils.json_to_sheet(event.reservations.map(reservation => ({
+                'Événement': event.title,
+                'Nom': `${reservation.user?.first_name} ${reservation.user?.last_name}`,
+                'Tickets': reservation.numberOfTickets,
+                'Total': Number(reservation.totalAmount) === 0 ? "Gratuit" : `${Number(reservation.totalAmount).toFixed(2)} €`,
+                'Âge': calculateAge(reservation.user?.date_of_birth),
+                'Email': reservation.user?.email,
+                'Date de réservation': formatDate(reservation?.createdAt),
+                'Code promo': reservation.appliedPromoCode || 'N/A'
+            })));
+            XLSX.utils.book_append_sheet(workbook, worksheet, event.title.slice(0, 31));
+        });
+        XLSX.writeFile(workbook, "reservations.xlsx");
+    };
+
     if (status === 'loading') return <div className="flex justify-center items-center h-screen">Chargement...</div>;
     if (status === 'unauthenticated') {
         router.push('/login');
@@ -72,36 +103,84 @@ export default function ProfilePage() {
                     <div className="lg:col-span-2">
                         <Tabs defaultValue="stats" className="w-full">
                             <TabsList className="grid w-full grid-cols-3 gap-1">
-                                <TabsTrigger value="stats">Statistiques</TabsTrigger>
-                                <TabsTrigger value="events">Mes événements</TabsTrigger>
-                                <TabsTrigger value="reservations">Mes réservations</TabsTrigger>
+                                <TabsTrigger value="stats" className="bg-orange-500 text-white hover:bg-orange-600">Statistiques</TabsTrigger>
+                                <TabsTrigger value="events" className="bg-orange-500 text-white hover:bg-orange-600">Mes événements</TabsTrigger>
+                                <TabsTrigger value="reservations" className="bg-orange-500 text-white hover:bg-orange-600">Mes réservations</TabsTrigger>
                             </TabsList>
                             <TabsContent value="stats">
-                                <Card>
+                                <Card className="bg-white shadow-lg rounded-lg overflow-hidden">
                                     <CardHeader>
-                                        <CardTitle>Statistiques des événements</CardTitle>
+                                        <CardTitle className="text-2xl font-bold text-gray-800">Statistiques des événements</CardTitle>
                                     </CardHeader>
                                     <CardContent>
                                         <EventStats events={userEvents} />
                                     </CardContent>
                                 </Card>
                             </TabsContent>
-                            <TabsContent value="events">
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>Mes événements et leurs réservations</CardTitle>
+                            <TabsContent value="events" className="h-[600px] overflow-y-auto">
+                                <Card className="bg-white shadow-lg rounded-lg overflow-hidden">
+                                    <CardHeader className="flex justify-between items-center sticky top-0 bg-white z-10 border-b">
+                                        <CardTitle className="text-2xl font-bold text-gray-800">Mes événements et leurs réservations</CardTitle>
+                                        <Button onClick={exportToExcel} variant="outline" size="sm" className="bg-orange-500 text-white hover:bg-orange-600">
+                                            <ArrowDownTrayIcon className="mr-2 h-4 w-4" />
+                                            Exporter en Excel
+                                        </Button>
                                     </CardHeader>
                                     <CardContent>
                                         {userEvents.map(event => (
-                                            <div key={event.id} className="mb-4 p-4 border rounded-lg">
-                                                <h3 className="text-lg font-medium">{event.title}</h3>
-                                                <p className="text-sm text-gray-600">Capacité: {event.capacity} | Places restantes: {event.availableTickets}</p>
-                                                <div className="mt-2">
-                                                    <h4 className="text-sm font-medium">Réservations:</h4>
-                                                    <ul className="mt-1 space-y-1">
+                                            <div key={event.id} className="mb-6 p-4 border shadow-sm bg-white rounded-lg">
+                                                <h3 className="text-xl font-semibold mb-2 text-orange-500">{event.title}</h3>
+                                                <div className="flex justify-between items-center mb-4 text-sm text-gray-600">
+                                                    <span>Capacité: {event.capacity}</span>
+                                                    <span>Places restantes: {event.availableTickets}</span>
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-md font-medium mb-3 text-orange-400">Réservations:</h4>
+                                                    <ul className="space-y-3">
                                                         {event.reservations.map(reservation => (
-                                                            <li key={reservation.id} className="text-sm">
-                                                                {reservation.user?.first_name} {reservation.user?.last_name} - {reservation.numberOfTickets} place(s)
+                                                            <li key={reservation.id} className="bg-orange-50 p-4 rounded-lg shadow-sm">
+                                                                <div className="flex items-center gap-3 mb-3">
+                                                                    <div className="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                                                                        <Image
+                                                                            src={reservation.user?.profile_picture || "/default-avatar.png"}
+                                                                            alt={`${reservation.user?.first_name} ${reservation.user?.last_name}`}
+                                                                            layout="fill"
+                                                                            objectFit="cover"
+                                                                            className="rounded-full"
+                                                                        />
+                                                                    </div>
+                                                                    <span className="font-medium text-orange-600 text-lg">
+                                                                        {reservation.user?.first_name} {reservation.user?.last_name}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="grid grid-cols-2 gap-2 text-sm text-gray-700">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <TicketIcon className="h-4 w-4 text-orange-400" />
+                                                                        <span>Tickets: {reservation.numberOfTickets}</span>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <CurrencyEuroIcon className="h-4 w-4 text-orange-400" />
+                                                                        <span>Total: {Number(reservation.totalAmount) === 0 ? "Gratuit" : `${Number(reservation.totalAmount).toFixed(2)} €`}</span>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <CalendarIcon className="h-4 w-4 text-orange-400" />
+                                                                        <span>Âge: {calculateAge(reservation.user?.date_of_birth)}</span>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <EnvelopeIcon className="h-4 w-4 text-orange-400" />
+                                                                        <span>Email: {reservation.user?.email}</span>
+                                                                    </div>
+                                                                    <div className="col-span-2 flex items-center gap-2">
+                                                                        <ClockIcon className="h-4 w-4 text-orange-400" />
+                                                                        <span>Réservé le: {formatDate(reservation?.createdAt)}</span>
+                                                                    </div>
+                                                                    {reservation.appliedPromoCode && (
+                                                                        <div className="col-span-2 flex items-center gap-2">
+                                                                            <TagIcon className="h-4 w-4 text-orange-400" />
+                                                                            <span>Code promo: {reservation.appliedPromoCode}</span>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
                                                             </li>
                                                         ))}
                                                     </ul>
@@ -111,23 +190,21 @@ export default function ProfilePage() {
                                     </CardContent>
                                 </Card>
                             </TabsContent>
-                            <TabsContent value="reservations">
-                                <Card>
+                            <TabsContent value="reservations" className='h-[600px] overflow-y-auto'>
+                                <Card className="bg-white shadow-lg rounded-lg overflow-hidden">
                                     <CardHeader>
-                                        <CardTitle>Mes réservations</CardTitle>
+                                        <CardTitle className="text-2xl font-bold text-gray-800">Mes réservations</CardTitle>
                                     </CardHeader>
                                     <CardContent>
                                         {userReservations.map(reservation => (
                                             <Link href={`/reservations/${reservation.id}`} key={reservation.id}>
                                                 <div className="flex items-center gap-2 mb-4 p-4 border rounded-lg hover:bg-gray-50 transition duration-150 ease-in-out">
-
-                                                    <Image src={reservation.event?.imageUrl || ''} className='w-8 h-8' alt='event-Image'
+                                                    <Image src={reservation.event?.imageUrl || ''} className='w-8 h-8 rounded-full' alt='event-Image'
                                                         width={32}
                                                         height={32}
                                                     />
-
                                                     <div>
-                                                        <h3 className="text-lg font-medium">{reservation.event.title}</h3>
+                                                        <h3 className="text-lg font-medium text-gray-800">{reservation.event.title}</h3>
                                                         <p className="text-sm text-gray-600">
                                                             {reservation.numberOfTickets} ticket(s) | Total: {Number(reservation.totalAmount).toFixed(2)} €
                                                         </p>
@@ -144,7 +221,7 @@ export default function ProfilePage() {
 
                 <div className="mt-12">
                     <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                        <CalendarIcon className="h-6 w-6 mr-2 text-blue-600" />
+                        <CalendarIcon className="h-6 w-6 mr-2 text-orange-500" />
                         Tous mes événements
                     </h2>
                     <EventList

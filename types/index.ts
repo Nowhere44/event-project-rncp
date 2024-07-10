@@ -199,6 +199,9 @@ export interface IReservation {
         id: string;
         first_name: string;
         last_name: string;
+        email: string;
+        profile_picture?: string;
+        date_of_birth?: Date;
     };
     event: {
         id: string;
@@ -211,6 +214,8 @@ export interface IReservation {
     };
     rating?: number;
     comment?: string;
+    createdAt: Date;
+    appliedPromoCode?: string;
 }
 
 export interface IRating {
