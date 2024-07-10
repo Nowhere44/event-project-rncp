@@ -1,11 +1,11 @@
-//app/api/events/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from "@/auth.config";
 import { validatePromoCode } from '@/actions';
 import { updateEvent } from '@/actions/events/update';
 import { getEventById } from '@/actions/events/read';
-
+import { deleteEvent } from '@/actions/events/delete';
+import { uploadToS3 } from '@/lib/s3Upload';
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
     try {
@@ -36,7 +36,6 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     }
 }
 
-
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -44,11 +43,57 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     }
 
     try {
-        const eventData = await req.json();
+        const formData = await req.formData();
+        const eventData: any = {};
+
+        const fields = ['title', 'description', 'event_date', 'start_time', 'end_time', 'location', 'latitude', 'longitude', 'capacity', 'is_paid', 'price', 'tags', 'imageUrl'];
+
+        fields.forEach(field => {
+            const value = formData.get(field);
+            if (value !== null) {
+                if (field === 'tags') {
+                    eventData[field] = JSON.parse(value as string);
+                } else if (field === 'event_date' || field === 'start_time' || field === 'end_time') {
+                    eventData[field] = new Date(value as string);
+                } else if (field === 'capacity' || field === 'price') {
+                    eventData[field] = Number(value);
+                } else if (field === 'is_paid') {
+                    eventData[field] = value === 'true';
+                } else if (field === 'latitude' || field === 'longitude') {
+                    eventData[field] = value ? parseFloat(value as string) : null;
+                } else {
+                    eventData[field] = value;
+                }
+            }
+        });
+
+        const imageFile = formData.get('image') as File | null;
+        if (imageFile) {
+            const uploadedImageUrl = await uploadToS3(imageFile);
+            eventData.imageUrl = uploadedImageUrl;
+        }
+
+        console.log('Event data before update:', eventData);
         const updatedEvent = await updateEvent(params.id, eventData, session.user.id);
+        console.log('Event updated:', updatedEvent);
         return NextResponse.json(updatedEvent, { status: 200 });
     } catch (error) {
         console.error('Error updating event:', error);
         return NextResponse.json({ error: 'Erreur lors de la mise à jour de l\'événement' }, { status: 500 });
+    }
+}
+
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+        return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
+    try {
+        await deleteEvent(params.id, session.user.id);
+        return NextResponse.json({ message: 'Événement supprimé avec succès' }, { status: 200 });
+    } catch (error) {
+        console.error('Error deleting event:', error);
+        return NextResponse.json({ error: 'Erreur lors de la suppression de l\'événement' }, { status: 500 });
     }
 }

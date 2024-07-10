@@ -1,4 +1,3 @@
-// app/api/events/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from "@/auth.config";
@@ -13,18 +12,46 @@ export async function POST(req: NextRequest) {
 
     try {
         const formData = await req.formData();
-        const eventData: any = Object.fromEntries(formData);
+        const eventData: any = {};
+
+        const fields = ['title', 'description', 'event_date', 'start_time', 'end_time', 'location', 'latitude', 'longitude', 'capacity', 'is_paid', 'price', 'tags'];
+
+        fields.forEach(field => {
+            const value = formData.get(field);
+            if (value !== null) {
+                if (field === 'tags') {
+                    eventData[field] = JSON.parse(value as string);
+                } else if (field === 'event_date' || field === 'start_time' || field === 'end_time') {
+                    eventData[field] = new Date(value as string);
+                } else if (field === 'capacity' || field === 'price') {
+                    eventData[field] = Number(value);
+                } else if (field === 'is_paid') {
+                    eventData[field] = value === 'true';
+                } else if (field === 'latitude' || field === 'longitude') {
+                    eventData[field] = value ? parseFloat(value as string) : null;
+                } else {
+                    eventData[field] = value;
+                }
+            }
+        });
 
         const imageFile = formData.get('image') as File | null;
         if (imageFile) {
             const uploadedImageUrl = await uploadToS3(imageFile);
             eventData.imageUrl = uploadedImageUrl;
+        } else {
+            const imageUrl = formData.get('imageUrl');
+            if (imageUrl) {
+                eventData.imageUrl = imageUrl;
+            }
         }
 
+        console.log('Event data before creation:', eventData);
         const event = await createEvent(eventData, session.user.id);
+        console.log('Event created:', event);
         return NextResponse.json(event, { status: 201 });
     } catch (error) {
-        console.error('Error creating event:', error);
+        console.error('Detailed error:', error);
         return NextResponse.json({
             error: 'Erreur lors de la création de l\'événement',
         }, { status: 500 });

@@ -4,12 +4,16 @@ export async function deleteEvent(eventId: string, userId: string) {
     try {
         const event = await prisma.event.findUnique({
             where: { id: eventId },
-            include: { reservations: true }
+            include: { reservations: true, tags: true }
         });
 
         if (!event || event.userId !== userId) {
             throw new Error('Non autorisé à supprimer cet événement');
         }
+
+        await prisma.eventTag.deleteMany({
+            where: { eventId }
+        });
 
         await prisma.reservation.deleteMany({
             where: { eventId }

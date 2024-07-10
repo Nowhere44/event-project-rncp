@@ -4,16 +4,16 @@ import { useState, useEffect, useRef } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { eventSchema } from '@/lib/validations/event';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import DatePicker, { registerLocale } from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useLoadScript } from '@react-google-maps/api';
-import { format, setHours, setMinutes } from 'date-fns';
+import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { TabsContent } from '@/components/ui/tabs';
 
@@ -52,19 +52,18 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
             description: '',
             imageUrl: '',
             event_date: new Date(),
-            start_time: setHours(setMinutes(new Date(), 0), 9), // 9:00 AM par défaut
-            end_time: setHours(setMinutes(new Date(), 0), 18), // 6:00 PM par défaut
+            start_time: new Date(),
+            end_time: new Date(new Date().getTime() + 60 * 60 * 1000),
             location: '',
             latitude: null,
             longitude: null,
-            capacity: 2,
+            capacity: 1,
             is_paid: false,
-            price: 1,
+            price: 0,
             tags: [],
         },
     });
 
-    const selectedDate = watch('event_date');
     const isPaid = watch('is_paid');
     const selectedTags = watch('tags');
 
@@ -88,12 +87,25 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
         fetchTags();
     }, []);
 
+    const handlePlaceSelect = () => {
+        if (autocompleteRef.current) {
+            const place = autocompleteRef.current.getPlace();
+            setValue('location', place.formatted_address || '');
+            setValue('latitude', place.geometry?.location?.lat() || null);
+            setValue('longitude', place.geometry?.location?.lng() || null);
+        }
+    };
+
     const onSubmit = async (data: any) => {
         setIsSubmitting(true);
         try {
             const formData = new FormData();
             Object.keys(data).forEach(key => {
-                if (key !== 'imageUrl' || useImageUrl) {
+                if (key === 'tags') {
+                    formData.append(key, JSON.stringify(data[key]));
+                } else if (key === 'latitude' || key === 'longitude') {
+                    formData.append(key, data[key] ? data[key].toString() : '');
+                } else if (key !== 'imageUrl' || useImageUrl) {
                     formData.append(key, data[key]);
                 }
             });
@@ -117,12 +129,14 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
 
             const event = await response.json();
             router.push(`/events/${event.id}`);
+            router.refresh();
         } catch (error) {
             console.error('Error submitting event:', error);
         } finally {
             setIsSubmitting(false);
         }
     };
+
 
     const handleAddTag = async () => {
         if (newTag.trim() !== '') {
@@ -143,15 +157,6 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
             } catch (error) {
                 console.error('Error creating tag:', error);
             }
-        }
-    };
-
-    const handlePlaceSelect = () => {
-        if (autocompleteRef.current) {
-            const place = autocompleteRef.current.getPlace();
-            setValue('location', place.formatted_address || '');
-            setValue('latitude', place.geometry?.location?.lat() || null);
-            setValue('longitude', place.geometry?.location?.lng() || null);
         }
     };
 
@@ -283,8 +288,6 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                                             dateFormat="HH:mm"
                                             placeholderText="Heure de début"
                                             className="w-full p-2 border rounded-md"
-                                            locale="fr"
-                                            timeFormat="HH:mm"
                                         />
                                     )}
                                 />
@@ -309,8 +312,6 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                                             dateFormat="HH:mm"
                                             placeholderText="Heure de fin"
                                             className="w-full p-2 border rounded-md"
-                                            locale="fr"
-                                            timeFormat="HH:mm"
                                         />
                                     )}
                                 />
@@ -353,12 +354,9 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                     <Input
                         id="capacity"
                         type="number"
-                        {...register('capacity', {
-                            valueAsNumber: true,
-                            min: { value: 2, message: "La capacité minimale est de 2 personnes" }
-                        })}
+                        {...register('capacity', { valueAsNumber: true })}
                         placeholder="Capacité"
-                        min={2}
+                        min={1}
                     />
                     {errors.capacity && <p className="mt-1 text-sm text-red-600">{errors.capacity.message as string}</p>}
                 </div>
@@ -394,7 +392,7 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                             placeholder="Nouveau tag"
                             className="flex-grow"
                         />
-                        <Button type="button" onClick={handleAddTag} className="whitespace-nowrap bg-orange-500">
+                        <Button type="button" onClick={handleAddTag} className="whitespace-nowrap">
                             Ajouter
                         </Button>
                     </div>
@@ -411,18 +409,12 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                                 <Checkbox
                                     id="is_paid"
                                     checked={field.value}
-                                    onCheckedChange={(checked) => {
-                                        field.onChange(checked);
-                                        if (checked) {
-                                            setValue('price', 1);
-                                        }
-                                    }}
+                                    onCheckedChange={field.onChange}
                                 />
                             )}
                         />
                         <label htmlFor="is_paid" className="text-sm font-medium text-gray-700">Événement payant</label>
                     </div>
-
                     {isPaid && (
                         <div>
                             <label htmlFor="price" className="block text-sm font-medium text-gray-700">Prix</label>
@@ -430,12 +422,8 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                                 id="price"
                                 type="number"
                                 step="0.01"
-                                {...register('price', {
-                                    valueAsNumber: true,
-                                    min: { value: 1, message: "Le prix minimum est de 1€" }
-                                })}
+                                {...register('price', { valueAsNumber: true })}
                                 placeholder="Prix"
-                                min={1}
                             />
                             {errors.price && <p className="mt-1 text-sm text-red-600">{errors.price.message as string}</p>}
                         </div>
@@ -447,16 +435,11 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                 <Button type="button" onClick={() => router.back()} variant="outline">
                     Annuler
                 </Button>
-                <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="px-6 py-2 bg-orange-500"
-                >
-                    {isSubmitting ? 'Création en cours...' : (eventId ? 'Mettre à jour' : 'Créer l\'événement')}
+                <Button type="submit" disabled={isSubmitting} className="px-6 py-2">
+                    {isSubmitting ? 'Envoi en cours...' : eventId ? 'Mettre à jour' : 'Créer l\'événement'}
                 </Button>
             </div>
         </form>
     );
 };
-
 export default EventForm;

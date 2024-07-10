@@ -14,6 +14,17 @@ import PromoCodeGenerator from './_components/promo-code-generator';
 import { verifyPayment } from '@/actions/payment';
 import { CalendarDaysIcon, ClockIcon, MapPinIcon, UsersIcon, TagIcon, CreditCardIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 export default async function EventPage({ params, searchParams }: { params: { id: string }, searchParams: { session_id?: string } }) {
     const session = await getServerSession(authOptions);
@@ -142,6 +153,7 @@ export default async function EventPage({ params, searchParams }: { params: { id
                                 </div>
                             </div>
 
+
                             {isOwner && new Date(event.event_date) > new Date() && (
                                 <div className="mt-6 flex space-x-3">
                                     <Link href={`/events/${params.id}/edit`}>
@@ -149,11 +161,27 @@ export default async function EventPage({ params, searchParams }: { params: { id
                                             Modifier
                                         </Button>
                                     </Link>
-                                    <form action={handleDelete}>
-                                        <Button type="submit" className="inline-flex items-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
-                                            Supprimer
-                                        </Button>
-                                    </form>
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button type="submit" className="inline-flex items-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
+                                                Supprimer
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Êtes-vous sûr de vouloir supprimer votre compte ?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    Cette action est irréversible. Toutes vos données seront définitivement supprimées.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Annuler</AlertDialogCancel>
+                                                <AlertDialogAction onClick={handleDelete} className="bg-red-500 hover:bg-red-600">
+                                                    Supprimer
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
                                 </div>
                             )}
 
