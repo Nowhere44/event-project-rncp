@@ -8,14 +8,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import DatePicker from 'react-datepicker';
+import DatePicker, { registerLocale } from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useLoadScript } from '@react-google-maps/api';
-import { format } from 'date-fns';
+import { format, setHours, setMinutes } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { TabsContent } from '@/components/ui/tabs';
+
+registerLocale('fr', fr);
 
 interface Tag {
     id: string;
@@ -36,6 +38,7 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
     const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [useImageUrl, setUseImageUrl] = useState(!!defaultValues?.imageUrl);
 
     const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm({
         resolver: zodResolver(eventSchema),
@@ -49,14 +52,14 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
             description: '',
             imageUrl: '',
             event_date: new Date(),
-            start_time: new Date(),
-            end_time: new Date(new Date().getTime() + 60 * 60 * 1000),
+            start_time: setHours(setMinutes(new Date(), 0), 9), // 9:00 AM par défaut
+            end_time: setHours(setMinutes(new Date(), 0), 18), // 6:00 PM par défaut
             location: '',
             latitude: null,
             longitude: null,
-            capacity: 1,
+            capacity: 2,
             is_paid: false,
-            price: 0,
+            price: 1,
             tags: [],
         },
     });
@@ -69,7 +72,6 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
         googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string,
         libraries: ["places"],
     });
-
 
     useEffect(() => {
         const fetchTags = async () => {
@@ -91,7 +93,7 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
         try {
             const formData = new FormData();
             Object.keys(data).forEach(key => {
-                if (key !== 'imageUrl') {
+                if (key !== 'imageUrl' || useImageUrl) {
                     formData.append(key, data[key]);
                 }
             });
@@ -99,7 +101,7 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
 
             if (imageFile) {
                 formData.append('image', imageFile);
-            } else if (data.imageUrl) {
+            } else if (useImageUrl && data.imageUrl) {
                 formData.append('imageUrl', data.imageUrl);
             }
 
@@ -121,7 +123,6 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
             setIsSubmitting(false);
         }
     };
-
 
     const handleAddTag = async () => {
         if (newTag.trim() !== '') {
@@ -158,12 +159,22 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
         const file = e.target.files?.[0];
         if (file) {
             setImageFile(file);
+            setUseImageUrl(false);
+            setValue('imageUrl', '');
             const reader = new FileReader();
             reader.onloadend = () => {
                 setImagePreview(reader.result as string);
             };
             reader.readAsDataURL(file);
         }
+    };
+
+    const handleImageUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const url = e.target.value;
+        setUseImageUrl(true);
+        setImageFile(null);
+        setImagePreview(url);
+        setValue('imageUrl', url);
     };
 
     return (
@@ -193,24 +204,34 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
 
                     <div>
                         <label htmlFor="image" className="block text-sm font-medium text-gray-700">{`Image de l'événement`}</label>
-                        <div className="mt-1">
-                            <Input
-                                id="imageFile"
-                                type="file"
-                                onChange={handleImageChange}
-                                accept="image/*"
-                            />
-                            <span className="text-sm text-gray-500">ou</span>
-                            <Input
-                                id="imageUrl"
-                                {...register('imageUrl')}
-                                placeholder="URL de l'image de l'événement"
-                            />
+                        <div className="mt-1 space-y-2">
+                            {useImageUrl ? (
+                                <Input
+                                    id="imageUrl"
+                                    {...register('imageUrl')}
+                                    onChange={handleImageUrlChange}
+                                    placeholder="URL de l'image de l'événement"
+                                />
+                            ) : (
+                                <Input
+                                    id="imageFile"
+                                    type="file"
+                                    onChange={handleImageChange}
+                                    accept="image/*"
+                                />
+                            )}
+                            <Button
+                                type="button"
+                                onClick={() => setUseImageUrl(!useImageUrl)}
+                                className="mt-2"
+                            >
+                                {useImageUrl ? "Utiliser un fichier local" : "Utiliser une URL"}
+                            </Button>
                         </div>
                         {errors.imageUrl && <p className="mt-1 text-sm text-red-600">{errors.imageUrl.message as string}</p>}
-                        {(imagePreview || watch('imageUrl')) && (
+                        {imagePreview && (
                             <div className="mt-2">
-                                <Image src={imagePreview || watch('imageUrl')} alt="Event image preview" width={200} height={200} className="rounded-lg" />
+                                <Image src={imagePreview} alt="Event image preview" width={200} height={200} className="rounded-lg" />
                             </div>
                         )}
                     </div>
@@ -262,10 +283,12 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                                             dateFormat="HH:mm"
                                             placeholderText="Heure de début"
                                             className="w-full p-2 border rounded-md"
+                                            locale="fr"
+                                            timeFormat="HH:mm"
                                         />
                                     )}
-                                /></div>
-
+                                />
+                            </div>
                         </div>
 
                         <div>
@@ -286,6 +309,8 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                                             dateFormat="HH:mm"
                                             placeholderText="Heure de fin"
                                             className="w-full p-2 border rounded-md"
+                                            locale="fr"
+                                            timeFormat="HH:mm"
                                         />
                                     )}
                                 />
@@ -328,9 +353,12 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                     <Input
                         id="capacity"
                         type="number"
-                        {...register('capacity', { valueAsNumber: true })}
+                        {...register('capacity', {
+                            valueAsNumber: true,
+                            min: { value: 2, message: "La capacité minimale est de 2 personnes" }
+                        })}
                         placeholder="Capacité"
-                        min={1}
+                        min={2}
                     />
                     {errors.capacity && <p className="mt-1 text-sm text-red-600">{errors.capacity.message as string}</p>}
                 </div>
@@ -383,7 +411,12 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                                 <Checkbox
                                     id="is_paid"
                                     checked={field.value}
-                                    onCheckedChange={field.onChange}
+                                    onCheckedChange={(checked) => {
+                                        field.onChange(checked);
+                                        if (checked) {
+                                            setValue('price', 1);
+                                        }
+                                    }}
                                 />
                             )}
                         />
@@ -397,8 +430,12 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                                 id="price"
                                 type="number"
                                 step="0.01"
-                                {...register('price', { valueAsNumber: true })}
+                                {...register('price', {
+                                    valueAsNumber: true,
+                                    min: { value: 1, message: "Le prix minimum est de 1€" }
+                                })}
                                 placeholder="Prix"
+                                min={1}
                             />
                             {errors.price && <p className="mt-1 text-sm text-red-600">{errors.price.message as string}</p>}
                         </div>
@@ -410,11 +447,16 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                 <Button type="button" onClick={() => router.back()} variant="outline">
                     Annuler
                 </Button>
-                <Button type="submit" disabled={isSubmitting} className="px-6 py-2 bg-orange-500">
-                    {isSubmitting ? 'Envoi en cours...' : eventId ? 'Mettre à jour' : 'Créer l\'événement'}
+                <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-6 py-2 bg-orange-500"
+                >
+                    {isSubmitting ? 'Création en cours...' : (eventId ? 'Mettre à jour' : 'Créer l\'événement')}
                 </Button>
             </div>
         </form>
     );
 };
+
 export default EventForm;
