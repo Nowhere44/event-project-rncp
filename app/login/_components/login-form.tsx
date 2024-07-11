@@ -64,8 +64,11 @@ export default function LoginForm() {
                     />
                 </div>
                 <div className="grid gap-2">
-                    <div className="flex items-center">
+                    <div className="flex items-center justify-between">
                         <Label htmlFor="password">Mot de passe</Label>
+                        <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
+                            Mot de passe oublié ?
+                        </Link>
                     </div>
                     <Input
                         id="password"

@@ -118,7 +118,7 @@ const ReservationForm: React.FC<ReservationFormProps> = ({ eventId, price, avail
                             className="flex-1 rounded-none rounded-l-md border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                         />
                         <Button type="button" onClick={validatePromoCode} className="rounded-none rounded-r-md">
-                            Valider
+                            Appliquer
                         </Button>
                     </div>
                 </div>

@@ -43,6 +43,8 @@ model User {
   sentPrivateMessages   PrivateMessage[] @relation("SentPrivateMessages")
   receivedPrivateMessages PrivateMessage[] @relation("ReceivedPrivateMessages")
   usedPromoCodes PromoCode[]
+  resetPasswordToken String?
+  resetPasswordExpires DateTime?
 }
 
 model Account {

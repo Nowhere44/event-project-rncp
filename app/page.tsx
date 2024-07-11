@@ -20,6 +20,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [isClient, setIsClient] = useState(false);
   const [numberTotalEvents, setNumberTotalEvents] = useState(0);
+  const [allEvents, setAllEvents] = useState<IEvent[]>([]);
 
   useEffect(() => {
     setIsClient(true);
@@ -28,19 +29,22 @@ export default function Home() {
   const fetchEvents = useCallback(async (filters = {}) => {
     setIsLoading(true);
     try {
-      const queryParams = new URLSearchParams({ ...filters, limit: '3' }).toString();
-      const response = await fetch(`/api/events?${queryParams}`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      setEvents(data.events);
-      setTotalPages(data.totalPages);
-      setNumberTotalEvents(data.events.length);
+
+      const allEventsResponse = await fetch(`/api/events`);
+      const allEventsData = await allEventsResponse.json();
+
+      const limitedEventsResponse = await fetch(`/api/events?limit=3`);
+      const limitedEventsData = await limitedEventsResponse.json();
+
+      setEvents(limitedEventsData.events);
+      setTotalPages(limitedEventsData.totalPages);
+      setNumberTotalEvents(allEventsData.total);
+      updateEventMap(allEventsData.events);
     } catch (error) {
       console.error('Error fetching events:', error);
       setEvents([]);
       setTotalPages(1);
+      setNumberTotalEvents(0);
     } finally {
       setIsLoading(false);
     }
@@ -49,6 +53,10 @@ export default function Home() {
   useEffect(() => {
     fetchEvents({ limit: 6 });
   }, [fetchEvents]);
+
+  const updateEventMap = (events: IEvent[]) => {
+    setAllEvents(events);
+  };
 
   if (!isClient) {
     return null;
@@ -91,7 +99,7 @@ export default function Home() {
                 className="rounded-2xl shadow-2xl object-cover"
               />
               <div className="absolute -bottom-6 -right-6 bg-white p-4 rounded-lg shadow-lg">
-                <p className="text-orange-500 font-semibold">{`+${events.length} événements ce mois-ci`}</p>
+                <p className="text-orange-500 font-semibold">{`+${numberTotalEvents} événements ce mois-ci`}</p>
               </div>
             </motion.div>
           </motion.div>
@@ -130,7 +138,7 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <h2 className="text-4xl font-bold mb-16 text-center text-gray-900">Événements à ne pas manquer</h2>
           <div className="mb-12">
-            <EventMap events={events} />
+            <EventMap events={allEvents} />
           </div>
 
           <div className='mb-12'>
@@ -145,7 +153,7 @@ export default function Home() {
               emptyTitle="Aucun événement trouvé"
               emptyStateSubtext="Revenez bientôt pour découvrir de nouveaux événements passionnants"
               collectionType="All_Events"
-              limit={6}
+              limit={3}
               page={1}
               totalPages={1}
               urlParamName="page"
