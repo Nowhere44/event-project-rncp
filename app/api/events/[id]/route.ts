@@ -1,4 +1,3 @@
-//api/events/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from "@/auth.config";
@@ -7,6 +6,8 @@ import { updateEvent } from '@/actions/events/update';
 import { getEventById } from '@/actions/events/read';
 import { deleteEvent } from '@/actions/events/delete';
 import { uploadToS3 } from '@/lib/s3Upload';
+import { encrypt, decrypt } from '@/lib/encryption';
+
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
     try {
@@ -37,6 +38,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     }
 }
 
+
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -47,7 +49,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
         const formData = await req.formData();
         const eventData: any = {};
 
-        const fields = ['title', 'description', 'event_date', 'start_time', 'end_time', 'location', 'latitude', 'longitude', 'capacity', 'is_paid', 'price', 'tags', 'imageUrl'];
+        const fields = ['title', 'description', 'event_date', 'start_time', 'end_time', 'location', 'latitude', 'longitude', 'capacity', 'is_paid', 'price', 'tags', 'isOnline', 'meetingType', 'meetingLink'];
 
         fields.forEach(field => {
             const value = formData.get(field);
@@ -58,7 +60,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
                     eventData[field] = new Date(value as string);
                 } else if (field === 'capacity' || field === 'price') {
                     eventData[field] = Number(value);
-                } else if (field === 'is_paid') {
+                } else if (field === 'is_paid' || field === 'isOnline') {
                     eventData[field] = value === 'true';
                 } else if (field === 'latitude' || field === 'longitude') {
                     eventData[field] = value ? parseFloat(value as string) : null;
@@ -68,15 +70,24 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
             }
         });
 
-        const imageFile = formData.get('image') as File | null;
-        if (imageFile) {
-            const uploadedImageUrl = await uploadToS3(imageFile);
-            eventData.imageUrl = uploadedImageUrl;
+        const existingImageUrls = JSON.parse(formData.get('existingImageUrls') as string || '[]');
+        const imageFiles = formData.getAll('imageFile');
+
+        if (eventData.isOnline && eventData.meetingType === 'INTEGRATED' && eventData.meetingLink) {
+            eventData.meetingLink = encrypt(eventData.meetingLink);
         }
 
-        console.log('Event data before update:', eventData);
+        const uploadedImages: string[] = [];
+        for (const file of imageFiles) {
+            if (file instanceof File) {
+                const uploadedImageUrl = await uploadToS3(file);
+                uploadedImages.push(uploadedImageUrl);
+            }
+        }
+
+        eventData.images = Array.from(new Set([...existingImageUrls, ...uploadedImages])).slice(0, 5);
+
         const updatedEvent = await updateEvent(params.id, eventData, session.user.id);
-        console.log('Event updated:', updatedEvent);
         return NextResponse.json(updatedEvent, { status: 200 });
     } catch (error) {
         console.error('Error updating event:', error);

@@ -1,4 +1,3 @@
-//app/api/tags/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { createTag, getTags } from '@/actions';
 

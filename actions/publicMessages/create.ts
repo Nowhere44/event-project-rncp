@@ -1,4 +1,3 @@
-//actions/publicMessages/create.ts
 import { prisma } from "@/server/db";
 
 export async function createPublicMessage(content: string, userId: string, type: string) {

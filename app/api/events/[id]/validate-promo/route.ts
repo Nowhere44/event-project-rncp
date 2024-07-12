@@ -1,4 +1,3 @@
-// app/api/events/[id]/validate-promo/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { authOptions } from "@/auth.config";
 import { getServerSession } from 'next-auth/next';

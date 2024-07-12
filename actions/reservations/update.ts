@@ -1,4 +1,3 @@
-//actions/reservations/update.ts
 import { prisma } from "@/server/db";
 import { ReservationStatus } from "@prisma/client";
 

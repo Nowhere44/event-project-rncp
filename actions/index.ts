@@ -1,4 +1,3 @@
-//actions/index.ts
 export * from './events/create';
 export * from './events/read';
 export * from './events/update';

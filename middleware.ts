@@ -23,8 +23,6 @@ export async function middleware(req: NextRequest) {
         return pathname === route;
     });
 
-    console.log("Is public route:", isPublicRoute);  // Ajoutez ce log
-
     // Rediriger les utilisateurs connectés loin des pages d'authentification
     if (isLoggedIn && authRoutes.includes(pathname)) {
         return NextResponse.redirect(new URL(DEFAULT_LOGIN_REDIRECTION, req.url));
@@ -37,7 +35,6 @@ export async function middleware(req: NextRequest) {
 
     // Rediriger les utilisateurs non connectés vers la page de connexion pour les routes protégées
     if (!isLoggedIn) {
-        console.log("Redirecting to login");  // Ajoutez ce log
         return NextResponse.redirect(new URL('/login', req.url));
     }
 

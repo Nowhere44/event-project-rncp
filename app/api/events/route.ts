@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from "@/auth.config";
-import { createEvent, getEvents } from '@/actions';
+import { createEvent } from '@/actions';
 import { uploadToS3 } from '@/lib/s3Upload';
+import { getEvents } from '@/actions/events/read';
 
 export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions);
@@ -14,7 +15,7 @@ export async function POST(req: NextRequest) {
         const formData = await req.formData();
         const eventData: any = {};
 
-        const fields = ['title', 'description', 'event_date', 'start_time', 'end_time', 'location', 'latitude', 'longitude', 'capacity', 'is_paid', 'price', 'tags'];
+        const fields = ['title', 'description', 'event_date', 'start_time', 'end_time', 'location', 'latitude', 'longitude', 'capacity', 'is_paid', 'price', 'tags', 'isOnline', 'meetingType', 'meetingLink'];
 
         fields.forEach(field => {
             const value = formData.get(field);
@@ -25,7 +26,7 @@ export async function POST(req: NextRequest) {
                     eventData[field] = new Date(value as string);
                 } else if (field === 'capacity' || field === 'price') {
                     eventData[field] = Number(value);
-                } else if (field === 'is_paid') {
+                } else if (field === 'is_paid' || field === 'isOnline') {
                     eventData[field] = value === 'true';
                 } else if (field === 'latitude' || field === 'longitude') {
                     eventData[field] = value ? parseFloat(value as string) : null;
@@ -35,20 +36,21 @@ export async function POST(req: NextRequest) {
             }
         });
 
-        const imageFile = formData.get('image') as File | null;
-        if (imageFile) {
-            const uploadedImageUrl = await uploadToS3(imageFile);
-            eventData.imageUrl = uploadedImageUrl;
-        } else {
-            const imageUrl = formData.get('imageUrl');
-            if (imageUrl) {
-                eventData.imageUrl = imageUrl;
+        // Gestion des images
+        const existingImageUrls = JSON.parse(formData.get('existingImageUrls') as string || '[]');
+        const imageFiles = formData.getAll('imageFile');
+
+        const uploadedImages = [];
+        for (const file of imageFiles) {
+            if (file instanceof File) {
+                const uploadedImageUrl = await uploadToS3(file);
+                uploadedImages.push(uploadedImageUrl);
             }
         }
 
-        console.log('Event data before creation:', eventData);
+        eventData.images = [...existingImageUrls, ...uploadedImages].slice(0, 5);
+
         const event = await createEvent(eventData, session.user.id);
-        console.log('Event created:', event);
         return NextResponse.json(event, { status: 201 });
     } catch (error) {
         console.error('Detailed error:', error);

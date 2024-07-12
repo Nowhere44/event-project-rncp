@@ -1,4 +1,3 @@
-//lin/ratingUtils.ts
 import { prisma } from "@/server/db";
 import { connectToDatabase } from './database';
 import Rating from './database/models/rating.model';
@@ -17,7 +16,6 @@ export async function updateEventRating(eventId: string) {
         where: { id: eventId },
         data: { averageRating },
     });
-    console.log(`Updated event ${eventId} average rating to ${averageRating}`);
 }
 
 export async function updateUserRating(userId: string) {
@@ -42,6 +40,4 @@ export async function updateUserRating(userId: string) {
         where: { id: userId },
         data: { averageRating },
     });
-
-    console.log(`Updated user ${userId} average rating to ${averageRating}`);
 }

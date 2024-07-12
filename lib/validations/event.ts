@@ -1,16 +1,19 @@
 import * as z from "zod";
 
 export const eventSchema = z.object({
-    title: z.string().min(3, "Le titre doit contenir au moins 3 caractères"),
-    description: z.string().min(10, "La description doit contenir au moins 10 caractères"),
-    event_date: z.date(),
-    start_time: z.date(),
-    end_time: z.date(),
-    location: z.string().min(3, "La localisation doit contenir au moins 3 caractères"),
-    latitude: z.number().optional(),
-    longitude: z.number().optional(),
-    capacity: z.number().min(1, "La capacité doit être d'au moins 1 personne"),
-    is_paid: z.boolean(),
-    price: z.number().optional(),
-    tags: z.array(z.string())
+    title: z.string().min(1, "Le titre est requis"),
+    description: z.string().min(1, "La description est requise"),
+    event_date: z.union([z.string(), z.date()]).optional(),
+    start_time: z.union([z.string(), z.date()]).optional(),
+    end_time: z.union([z.string(), z.date()]).optional(),
+    location: z.string().min(1, "La localisation est requise"),
+    latitude: z.union([z.number(), z.string()]).nullable().optional(),
+    longitude: z.union([z.number(), z.string()]).nullable().optional(),
+    capacity: z.union([z.number(), z.string()]).optional(),
+    is_paid: z.boolean().optional(),
+    price: z.union([z.number(), z.string()]).nullable().optional(),
+    tags: z.array(z.string()).optional(),
+    isOnline: z.boolean().optional(),
+    meetingType: z.enum(['EXTERNAL', 'INTEGRATED']).nullable().optional(),
+    meetingLink: z.string().url().nullable().optional(),
 });

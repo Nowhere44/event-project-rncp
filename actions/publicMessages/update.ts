@@ -1,4 +1,3 @@
-//actions/publicMessages/update.ts
 import { prisma } from "@/server/db";
 
 export async function updatePublicMessage(id: string, content: string) {

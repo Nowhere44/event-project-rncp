@@ -70,7 +70,6 @@ model Event {
   id           String        @id @default(cuid())
   title        String
   description  String
-  imageUrl     String?
   event_date   DateTime
   start_time   DateTime
   end_time     DateTime
@@ -88,6 +87,24 @@ model Event {
   reservations Reservation[]
   averageRating Float?
   promoCodes PromoCode[]
+  images        Image[]
+  isOnline      Boolean       @default(false)
+  meetingLink   String?
+  meetingType   MeetingType?
+}
+
+model Image {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  url       String
+  order     Int
+   @@unique([eventId, url])
+}
+
+enum MeetingType {
+  EXTERNAL
+  INTEGRATED
 }
 
 model PromoCode {

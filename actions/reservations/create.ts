@@ -1,4 +1,3 @@
-// actions/reservations/create.ts
 import { prisma } from '@/server/db';
 import { Prisma, ReservationStatus, Event } from '@prisma/client';
 import { updateUserTotalRevenue } from '@/actions/users/update';
@@ -26,7 +25,35 @@ export async function createReservation({ eventId, userId, numberOfTickets, prom
     }
 
     validateEventDate(event);
-    validateAvailableTickets(event, numberOfTickets);
+
+    const now = new Date();
+    const eventStartTime = new Date(event.start_time);
+    const eventEndTime = new Date(event.end_time);
+
+    if (now > eventEndTime) {
+        throw new Error('Cet événement est déjà terminé');
+    }
+
+
+    if (event.isOnline) {
+        const existingReservation = await prisma.reservation.findFirst({
+            where: {
+                eventId: event.id,
+                userId: userId,
+                status: ReservationStatus.Confirmed
+            }
+        });
+
+        if (existingReservation) {
+            throw new Error('Vous avez déjà réservé cet événement en ligne. Une seule réservation est autorisée par personne pour les événements en ligne.');
+        }
+
+        if (numberOfTickets > 1) {
+            throw new Error('Pour les événements en ligne, vous ne pouvez réserver qu\'un seul ticket.');
+        }
+    } else {
+        validateAvailableTickets(event, numberOfTickets);
+    }
 
     const { discount, appliedPromoCode } = await applyPromoCode(event, promoCode);
     const totalAmount = calculateTotalAmount(event, numberOfTickets, discount);
@@ -40,10 +67,10 @@ export async function createReservation({ eventId, userId, numberOfTickets, prom
 
 function validateEventDate(event: Event) {
     const currentDate = new Date();
-    const eventDate = new Date(event.event_date);
+    const eventEndDate = new Date(event.end_time);
 
-    if (eventDate.getTime() < currentDate.getTime()) {
-        throw new Error('Cet événement est déjà passé');
+    if (eventEndDate.getTime() < currentDate.getTime()) {
+        throw new Error('Cet événement est déjà terminé');
     }
 }
 

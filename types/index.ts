@@ -1,3 +1,4 @@
+import Image from 'next/image';
 // ====== USER PARAMS
 export type CreateUserParams = {
     clerkId: string
@@ -166,6 +167,7 @@ export interface IEvent {
     latitude: number;
     longitude: number;
     averageRating?: number;
+    isOnline: boolean;
     tags?: {
         tag: {
             id: string;
@@ -181,7 +183,15 @@ export interface IEvent {
         averageRating?: number;
     };
     reservations: IReservation[];
-    availableTickets?: number; // Ajoutez cette ligne
+    availableTickets?: number;
+    images: Image[];
+}
+
+export interface Image {
+    url: string;
+    order: number;
+    eventId: string;
+    id: string;
 }
 
 export interface ITag {
@@ -210,7 +220,7 @@ export interface IReservation {
         end_time: Date;
         event_date: Date;
         reservationDate: Date;
-        imageUrl?: string;
+        images: Image[];
     };
     rating?: number;
     comment?: string;

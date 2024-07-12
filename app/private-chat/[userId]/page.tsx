@@ -1,4 +1,3 @@
-//private-chat/[userId]/page.tsx
 'use client'
 import { useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
@@ -51,7 +50,6 @@ const PrivateChatPage = () => {
         });
 
         socketRef.current.on('connect', () => {
-            console.log('Connected to Socket.IO server');
             socketRef.current?.emit('register', session?.user?.id);
         });
     };

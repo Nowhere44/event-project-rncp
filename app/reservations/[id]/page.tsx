@@ -142,9 +142,9 @@ export default function ReservationDetailPage() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        {reservation?.event?.imageUrl && (
+                        {reservation?.event?.images[0].url && (
                             <Image
-                                src={reservation.event.imageUrl}
+                                src={reservation.event?.images[0].url}
                                 alt={reservation.event.title}
                                 className="w-full h-48 object-cover rounded-md mb-4"
                                 width={500}

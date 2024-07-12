@@ -1,4 +1,3 @@
-// actions/payment.ts
 'use server'
 import { prisma } from "@/server/db";
 import { ReservationStatus, PaymentStatus } from "@prisma/client";
@@ -15,7 +14,6 @@ export async function verifyPayment(sessionId: string) {
     try {
         const session = await stripe.checkout.sessions.retrieve(sessionId);
         if (session.payment_status === 'paid') {
-            // Vérifier si une réservation existe déjà avec ce stripeSessionId
             let reservation = await prisma.reservation.findUnique({
                 where: { stripeSessionId: sessionId },
                 include: {
@@ -25,7 +23,6 @@ export async function verifyPayment(sessionId: string) {
             });
 
             if (!reservation) {
-                // Si la réservation n'existe pas, la créer
                 reservation = await prisma.reservation.create({
                     data: {
                         eventId: session.metadata!.eventId,
@@ -42,7 +39,6 @@ export async function verifyPayment(sessionId: string) {
                     }
                 });
             } else if (reservation.status !== ReservationStatus.Confirmed) {
-                // Si la réservation existe mais n'est pas confirmée, la mettre à jour
                 reservation = await prisma.reservation.update({
                     where: { id: reservation.id },
                     data: { status: ReservationStatus.Confirmed },
@@ -53,7 +49,6 @@ export async function verifyPayment(sessionId: string) {
                 });
             }
 
-            // Mise à jour du code promo
             if (reservation.appliedPromoCode) {
                 await prisma.promoCode.updateMany({
                     where: {
@@ -69,7 +64,6 @@ export async function verifyPayment(sessionId: string) {
                 });
             }
 
-            // Envoi de la confirmation
             if (reservation) {
                 await sendReservationConfirmation(
                     reservation.user.email,
@@ -79,13 +73,11 @@ export async function verifyPayment(sessionId: string) {
                 );
             }
 
-            // Vérifier si un paiement existe déjà pour cette réservation
             let payment = await prisma.payment.findUnique({
                 where: { reservationId: reservation.id }
             });
 
             if (!payment) {
-                // Créer le paiement seulement s'il n'existe pas déjà
                 payment = await prisma.payment.create({
                     data: {
                         reservationId: reservation.id,

@@ -1,4 +1,3 @@
-//actions/reservations/update.ts
 import { prisma } from '@/server/db';
 import { Prisma, Reservation, ReservationStatus } from '@prisma/client';
 import { updateUserTotalRevenue } from '@/actions/users/update';

@@ -1,4 +1,3 @@
-//actions/promoCodes/list.ts
 import { prisma } from "@/server/db";
 
 export async function listPromoCodes(eventId: string) {

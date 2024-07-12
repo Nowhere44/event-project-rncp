@@ -1,4 +1,3 @@
-//app/api/private-messages/[id]/route.ts
 import { deletePrivateMessage, updatePrivateMessage } from '@/actions';
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
@@ -51,7 +50,6 @@ export async function PUT(
                 id: messageId,
                 content,
                 senderId: session.user.id,
-                // Ajoutez d'autres champs nécessaires ici
             };
             await pusherServer.trigger(`private-${receiverId}`, 'editPrivateMessage', updatedMessage);
             await pusherServer.trigger(`private-${session.user.id}`, 'editPrivateMessage', updatedMessage);

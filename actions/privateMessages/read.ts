@@ -1,4 +1,3 @@
-// actions/privateMessages/read.ts
 import { prisma } from "@/server/db";
 
 export async function getPrivateMessages(userId: string, otherUserId: string) {

@@ -4,7 +4,7 @@ import { IEvent } from '@/types'
 import { useSession } from 'next-auth/react'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CalendarIcon, MapPinIcon, UsersIcon, StarIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline'
+import { CalendarIcon, MapPinIcon, UsersIcon, StarIcon, CurrencyDollarIcon, GlobeAltIcon } from '@heroicons/react/24/outline'
 import { AspectRatio } from "@/components/ui/aspect-ratio"
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
@@ -30,7 +30,7 @@ const EventCard = ({ event, hasOrderLink, hidePrice }: CardProps) => {
                 <CardHeader className="p-0">
                     <AspectRatio ratio={16 / 9}>
                         <Image
-                            src={event.imageUrl || '/placeholder.jpg'}
+                            src={event?.images[0]?.url || '/placeholder.jpg'}
                             alt={event.title}
                             className="object-cover w-full h-full rounded-t-lg"
                             width={500}
@@ -46,9 +46,21 @@ const EventCard = ({ event, hasOrderLink, hidePrice }: CardProps) => {
                             <span>{formattedDate}</span>
                         </div>
                         <div className="flex items-center">
-                            <MapPinIcon className="h-4 w-4 mr-2 text-gray-500" />
-                            <span className="line-clamp-1">{event.location}</span>
+                            {event?.isOnline ? (
+                                <GlobeAltIcon className="h-4 w-4 mr-2 text-gray-500" />
+                            ) : (
+                                <MapPinIcon className="h-4 w-4 mr-2 text-gray-500" />
+                            )}
+                            <span className="line-clamp-1">
+                                {event?.isOnline ? "Événement en ligne" : event.location}
+                            </span>
                         </div>
+                        {event?.isOnline && event.location && (
+                            <div className="flex items-center">
+                                <MapPinIcon className="h-4 w-4 mr-2 text-gray-500" />
+                                <span className="line-clamp-1">{event.location}</span>
+                            </div>
+                        )}
                         <div className="flex items-center">
                             <UsersIcon className="h-4 w-4 mr-2 text-gray-500" />
                             <span>Capacité: {event.capacity} | Restant: {availableTickets}</span>

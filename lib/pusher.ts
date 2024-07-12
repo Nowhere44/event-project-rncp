@@ -1,4 +1,3 @@
-//lib/pusher.ts
 import Pusher from 'pusher';
 import PusherClient from 'pusher-js';
 

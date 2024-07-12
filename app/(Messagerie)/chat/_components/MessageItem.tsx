@@ -34,7 +34,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, currentUserId, onDel
         };
 
         checkEditability();
-        const timer = setInterval(checkEditability, 1000); // Vérifier chaque seconde
+        const timer = setInterval(checkEditability, 1000);
 
         return () => clearInterval(timer);
     }, [message.editableUntil]);

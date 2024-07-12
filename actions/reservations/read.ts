@@ -1,4 +1,3 @@
-//actions/reservations/update.ts
 import { prisma } from "@/server/db";
 import { Reservation, ReservationStatus } from "@prisma/client";
 
@@ -13,7 +12,7 @@ export async function getReservationById(id: string): Promise<Reservation | null
                     start_time: true,
                     end_time: true,
                     event_date: true,
-                    imageUrl: true
+                    images: true
                 }
             },
         }
@@ -37,7 +36,7 @@ export async function getReservationsByEventId(eventId: string, userId: string):
                     start_time: true,
                     end_time: true,
                     event_date: true,
-                    imageUrl: true
+                    images: true
                 }
             },
         }
@@ -82,7 +81,7 @@ export async function getUserReservations(userId: string): Promise<Reservation[]
                     id: true,
                     title: true,
                     start_time: true,
-                    imageUrl: true
+                    images: true
                 }
             },
         }

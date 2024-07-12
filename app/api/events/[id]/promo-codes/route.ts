@@ -1,4 +1,3 @@
-// app/api/events/[id]/promo-codes/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from "@/auth.config";

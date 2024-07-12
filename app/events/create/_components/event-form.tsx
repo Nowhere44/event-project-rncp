@@ -2,22 +2,25 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { eventSchema } from '@/lib/validations/event';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import DatePicker, { registerLocale } from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { useLoadScript } from '@react-google-maps/api';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import { TabsContent } from '@/components/ui/tabs';
+import { useLoadScript } from '@react-google-maps/api';
+import { Libraries } from '@react-google-maps/api/dist/utils/make-load-script-url';
+import { format, setHours, setMinutes } from 'date-fns';
+import { fr } from 'date-fns/locale';
+
 
 registerLocale('fr', fr);
+
+const libraries: Libraries = ["places"];
 
 interface Tag {
     id: string;
@@ -36,24 +39,25 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
     const [newTag, setNewTag] = useState('');
     const router = useRouter();
     const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
-    const [imageFile, setImageFile] = useState<File | null>(null);
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const [useImageUrl, setUseImageUrl] = useState(!!defaultValues?.imageUrl);
+    const [imageFiles, setImageFiles] = useState<File[]>([]);
+    const [imageUrls, setImageUrls] = useState<string[]>(defaultValues?.imageUrls || []);
+    const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
-    const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm({
-        resolver: zodResolver(eventSchema),
+    const { register, handleSubmit, control, watch, setError, setValue, formState: { errors } } = useForm({
         defaultValues: defaultValues ? {
             ...defaultValues,
             tags: defaultValues.simplifiedTags || [],
             start_time: new Date(defaultValues.start_time),
             end_time: new Date(defaultValues.end_time),
+            isOnline: defaultValues.isOnline || false,
+            meetingType: defaultValues.meetingType || null,
+            meetingLink: defaultValues.meetingLink || '',
         } : {
             title: '',
             description: '',
-            imageUrl: '',
             event_date: new Date(),
-            start_time: new Date(),
-            end_time: new Date(new Date().getTime() + 60 * 60 * 1000),
+            start_time: setHours(setMinutes(new Date(), 0), 9),
+            end_time: setHours(setMinutes(new Date(), 0), 18),
             location: '',
             latitude: null,
             longitude: null,
@@ -61,16 +65,28 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
             is_paid: false,
             price: 0,
             tags: [],
+            isOnline: false,
+            meetingType: null,
+            meetingLink: '',
         },
     });
 
     const isPaid = watch('is_paid');
     const selectedTags = watch('tags');
+    const isOnline = watch('isOnline');
+    const meetingType = watch('meetingType');
 
     const { isLoaded } = useLoadScript({
         googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string,
-        libraries: ["places"],
+        libraries: libraries,
     });
+
+
+    useEffect(() => {
+        if (defaultValues?.imageUrls) {
+            setImageUrls(defaultValues.imageUrls);
+        }
+    }, [defaultValues]);
 
     useEffect(() => {
         const fetchTags = async () => {
@@ -96,6 +112,15 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
         }
     };
 
+    const removeImage = (index: number, type: 'file' | 'url') => {
+        if (type === 'file') {
+            setImageFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
+            setImagePreviews(prevPreviews => prevPreviews.filter((_, i) => i !== index));
+        } else {
+            setImageUrls(prevUrls => prevUrls.filter((_, i) => i !== index));
+        }
+    };
+
     const onSubmit = async (data: any) => {
         setIsSubmitting(true);
         try {
@@ -103,22 +128,27 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
             Object.keys(data).forEach(key => {
                 if (key === 'tags') {
                     formData.append(key, JSON.stringify(data[key]));
-                } else if (key === 'latitude' || key === 'longitude') {
-                    formData.append(key, data[key] ? data[key].toString() : '');
-                } else if (key !== 'imageUrl' || useImageUrl) {
+                } else if (key === 'event_date' || key === 'start_time' || key === 'end_time') {
+                    formData.append(key, data[key] instanceof Date ? data[key].toISOString() : data[key]);
+                } else if (typeof data[key] === 'boolean') {
+                    formData.append(key, data[key].toString());
+                } else if (data[key] !== null && data[key] !== undefined) {
                     formData.append(key, data[key]);
                 }
             });
             formData.append('userId', userId);
 
-            if (imageFile) {
-                formData.append('image', imageFile);
-            } else if (useImageUrl && data.imageUrl) {
-                formData.append('imageUrl', data.imageUrl);
-            }
+            formData.append('existingImageUrls', JSON.stringify(imageUrls));
 
-            const response = await fetch(`/api/events${eventId ? `/${eventId}` : ''}`, {
-                method: eventId ? 'PUT' : 'POST',
+            imageFiles.forEach((file, index) => {
+                formData.append(`imageFile`, file);
+            });
+
+            const url = `/api/events${eventId ? `/${eventId}` : ''}`;
+            const method = eventId ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method: method,
                 body: formData,
             });
 
@@ -136,7 +166,6 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
             setIsSubmitting(false);
         }
     };
-
 
     const handleAddTag = async () => {
         if (newTag.trim() !== '') {
@@ -161,25 +190,19 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
     };
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            setImageFile(file);
-            setUseImageUrl(false);
-            setValue('imageUrl', '');
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setImagePreview(reader.result as string);
-            };
-            reader.readAsDataURL(file);
-        }
+        const files = Array.from(e.target.files || []).slice(0, 5 - imageUrls.length - imagePreviews.length);
+        setImageFiles(prevFiles => [...prevFiles, ...files]);
+
+        const newPreviews = files.map(file => URL.createObjectURL(file));
+        setImagePreviews(prevPreviews => [...prevPreviews, ...newPreviews]);
     };
 
-    const handleImageUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const url = e.target.value;
-        setUseImageUrl(true);
-        setImageFile(null);
-        setImagePreview(url);
-        setValue('imageUrl', url);
+    const handleImageUrlAdd = () => {
+        const url = watch('newImageUrl');
+        if (url && imageUrls.length + imageFiles.length + imagePreviews.length < 5 && !imageUrls.includes(url)) {
+            setImageUrls(prevUrls => [...prevUrls, url]);
+            setValue('newImageUrl', '');
+        }
     };
 
     return (
@@ -208,37 +231,44 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                     </div>
 
                     <div>
-                        <label htmlFor="image" className="block text-sm font-medium text-gray-700">{`Image de l'événement`}</label>
+                        <label className="block text-sm font-medium text-gray-700">{`Images de l'événement (max 5)`}</label>
                         <div className="mt-1 space-y-2">
-                            {useImageUrl ? (
+                            <Input
+                                type="file"
+                                multiple
+                                accept="image/*"
+                                onChange={handleImageChange}
+                                disabled={imageUrls.length + imageFiles.length >= 5}
+                            />
+                            <div className="flex items-center space-x-2">
                                 <Input
-                                    id="imageUrl"
-                                    {...register('imageUrl')}
-                                    onChange={handleImageUrlChange}
-                                    placeholder="URL de l'image de l'événement"
+                                    {...register('newImageUrl')}
+                                    placeholder="URL de l'image"
+                                    disabled={imageUrls.length + imageFiles.length >= 5}
                                 />
-                            ) : (
-                                <Input
-                                    id="imageFile"
-                                    type="file"
-                                    onChange={handleImageChange}
-                                    accept="image/*"
-                                />
-                            )}
-                            <Button
-                                type="button"
-                                onClick={() => setUseImageUrl(!useImageUrl)}
-                                className="mt-2"
-                            >
-                                {useImageUrl ? "Utiliser un fichier local" : "Utiliser une URL"}
-                            </Button>
-                        </div>
-                        {errors.imageUrl && <p className="mt-1 text-sm text-red-600">{errors.imageUrl.message as string}</p>}
-                        {imagePreview && (
-                            <div className="mt-2">
-                                <Image src={imagePreview} alt="Event image preview" width={200} height={200} className="rounded-lg" />
+                                <Button type="button" onClick={handleImageUrlAdd} disabled={imageUrls.length + imageFiles.length >= 5}>
+                                    Ajouter URL
+                                </Button>
                             </div>
-                        )}
+                        </div>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                            {imagePreviews.map((preview, index) => (
+                                <div key={`file-${index}`} className="relative">
+                                    <Image src={preview} alt={`Preview ${index + 1}`} width={100} height={100} className="rounded-lg" />
+                                    <button type="button" onClick={() => removeImage(index, 'file')} className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1">
+                                        X
+                                    </button>
+                                </div>
+                            ))}
+                            {imageUrls.map((url, index) => (
+                                <div key={`url-${index}`} className="relative">
+                                    <Image src={url} alt={`URL Image ${index + 1}`} width={100} height={100} className="rounded-lg" />
+                                    <button type="button" onClick={() => removeImage(index, 'url')} className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1">
+                                        X
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
                     </div>
 
                     <div>
@@ -251,7 +281,13 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                                     <DatePicker
                                         id="event_date"
                                         selected={field.value}
-                                        onChange={(date) => field.onChange(date)}
+                                        onChange={(date) => {
+                                            field.onChange(date);
+                                            const currentStartTime = watch('start_time');
+                                            const currentEndTime = watch('end_time');
+                                            setValue('start_time', setHours(setMinutes(date as Date, currentStartTime.getMinutes()), currentStartTime.getHours()));
+                                            setValue('end_time', setHours(setMinutes(date as Date, currentEndTime.getMinutes()), currentEndTime.getHours()));
+                                        }}
                                         dateFormat="EEEE dd MMMM yyyy"
                                         placeholderText="Date de l'événement"
                                         className="w-full p-2 border rounded-md"
@@ -280,7 +316,10 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                                         <DatePicker
                                             id="start_time"
                                             selected={field.value}
-                                            onChange={(date) => field.onChange(date)}
+                                            onChange={(date) => {
+                                                const eventDate = watch('event_date');
+                                                field.onChange(setHours(setMinutes(eventDate, date?.getMinutes() || 0), date?.getHours() || 0));
+                                            }}
                                             showTimeSelect
                                             showTimeSelectOnly
                                             timeIntervals={15}
@@ -288,6 +327,7 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                                             dateFormat="HH:mm"
                                             placeholderText="Heure de début"
                                             className="w-full p-2 border rounded-md"
+                                            locale={fr}
                                         />
                                     )}
                                 />
@@ -304,7 +344,10 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                                         <DatePicker
                                             id="end_time"
                                             selected={field.value}
-                                            onChange={(date) => field.onChange(date)}
+                                            onChange={(date) => {
+                                                const eventDate = watch('event_date');
+                                                field.onChange(setHours(setMinutes(eventDate, date?.getMinutes() || 0), date?.getHours() || 0));
+                                            }}
                                             showTimeSelect
                                             showTimeSelectOnly
                                             timeIntervals={15}
@@ -312,12 +355,52 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                                             dateFormat="HH:mm"
                                             placeholderText="Heure de fin"
                                             className="w-full p-2 border rounded-md"
+                                            locale={fr}
                                         />
                                     )}
                                 />
                             </div>
                         </div>
                     </div>
+
+                    <div>
+                        <label className="flex items-center space-x-2">
+                            <Checkbox
+                                checked={isOnline}
+                                onCheckedChange={(checked) => setValue('isOnline', checked as boolean)}
+                            />
+                            <span>Événement en ligne</span>
+                        </label>
+                    </div>
+                    {isOnline && (
+                        <div>
+                            <label htmlFor="meetingType" className="block text-sm font-medium text-gray-700">Type de réunion</label>
+                            <Select
+                                value={meetingType || ''}
+                                onValueChange={(value) => setValue('meetingType', value as 'EXTERNAL' | 'INTEGRATED')}
+                            >
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Choisir le type de réunion" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="EXTERNAL">Lien externe</SelectItem>
+                                    <SelectItem value="INTEGRATED">Utiliser notre plateforme</SelectItem>
+                                </SelectContent>
+                            </Select>
+
+                            {meetingType === 'EXTERNAL' && (
+                                <div className="mt-2">
+                                    <label htmlFor="meetingLink" className="block text-sm font-medium text-gray-700">Lien de la réunion</label>
+                                    <Input
+                                        id="meetingLink"
+                                        type="url"
+                                        {...register('meetingLink')}
+                                        placeholder="https://exemple.com/reunion"
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </TabsContent>
 
@@ -435,11 +518,16 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                 <Button type="button" onClick={() => router.back()} variant="outline">
                     Annuler
                 </Button>
-                <Button type="submit" disabled={isSubmitting} className="px-6 py-2">
+                <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-6 py-2"
+                >
                     {isSubmitting ? 'Envoi en cours...' : eventId ? 'Mettre à jour' : 'Créer l\'événement'}
                 </Button>
             </div>
         </form>
     );
 };
+
 export default EventForm;

@@ -1,4 +1,3 @@
-// app/api/event-creator/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserById } from '../../../../actions/users/read';
 

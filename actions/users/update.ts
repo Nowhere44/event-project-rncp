@@ -1,4 +1,3 @@
-//actions/users/update.ts
 "use server";
 import { prisma } from "@/server/db";
 import { revalidatePath } from "next/cache";

@@ -199,7 +199,7 @@ export default function ProfilePage() {
                                         {userReservations.map(reservation => (
                                             <Link href={`/reservations/${reservation.id}`} key={reservation.id}>
                                                 <div className="flex items-center gap-2 mb-4 p-4 border rounded-lg hover:bg-gray-50 transition duration-150 ease-in-out">
-                                                    <Image src={reservation.event?.imageUrl || ''} className='w-8 h-8 rounded-full' alt='event-Image'
+                                                    <Image src={reservation.event?.images[0]?.url || ''} className='w-8 h-8 rounded-full' alt='event-Image'
                                                         width={32}
                                                         height={32}
                                                     />

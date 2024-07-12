@@ -1,5 +1,3 @@
-// app/events/_components/event-list.tsx
-
 import React from 'react'
 import EventCard from './event-card'
 import Pagination from '@/components/shared/Pagination'

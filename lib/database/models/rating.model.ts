@@ -1,4 +1,3 @@
-//lib/database/models/rating.model.ts
 import { Schema, model, models, Document } from "mongoose";
 
 export interface IRating extends Document {

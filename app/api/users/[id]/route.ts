@@ -1,4 +1,3 @@
-// app/api/users/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { updateUser } from '@/actions/users/update';
 import { deleteUser } from '@/actions/users/delete';

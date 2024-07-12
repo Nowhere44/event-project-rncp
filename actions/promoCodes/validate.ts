@@ -1,4 +1,3 @@
-//actions/promoCodes/validate.ts
 import { prisma } from "@/server/db";
 
 export async function validatePromoCode(eventId: string, promoCode: string) {

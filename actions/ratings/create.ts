@@ -1,4 +1,3 @@
-//actions/ratings/create.ts
 "use server";
 import { connectToDatabase } from '@/lib/database';
 import Rating from '@/lib/database/models/rating.model';

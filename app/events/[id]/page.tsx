@@ -12,8 +12,7 @@ import ReadOnlyRatingStars from '@/components/shared/ReadOnlyRatingStars';
 import { CommentSection } from './_components/comment-section';
 import PromoCodeGenerator from './_components/promo-code-generator';
 import { verifyPayment } from '@/actions/payment';
-import { CalendarDaysIcon, ClockIcon, MapPinIcon, UsersIcon, TagIcon, CreditCardIcon } from '@heroicons/react/24/outline';
-import Image from 'next/image';
+import { CalendarDaysIcon, ClockIcon, MapPinIcon, UsersIcon, TagIcon, CreditCardIcon, GlobeAltIcon, VideoCameraIcon } from '@heroicons/react/24/outline';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -25,6 +24,12 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import EventImageGallery from './_components/EventImageGallery';
+import VideoCall from './_components/VideoCall'
+import { getUserReservations } from '@/actions/reservations/read';
+import { decrypt } from '@/lib/encryption';
+import { format, isBefore, isAfter, parseISO } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 export default async function EventPage({ params, searchParams }: { params: { id: string }, searchParams: { session_id?: string } }) {
     const session = await getServerSession(authOptions);
@@ -42,6 +47,25 @@ export default async function EventPage({ params, searchParams }: { params: { id
 
     const isOwner = session?.user?.id === event.userId;
     const isAuthenticated = !!session;
+    const eventDate = parseISO(event.event_date);
+    const userReservations = await getUserReservations(session?.user.id || '');
+    const userHasEventReservation = userReservations.some((reservation: any) => reservation.eventId === event.id);
+
+    let meetingLink = null;
+    if (event.isOnline && event.meetingType === 'INTEGRATED' && (isOwner || userHasEventReservation)) {
+        const now = new Date();
+        if (now >= eventDate) {
+            meetingLink = decrypt(event.meetingLink);
+        }
+    }
+
+    const now = new Date();
+    const eventStartTime = parseISO(event.start_time);
+    const eventEndTime = parseISO(event.end_time);
+    const isEventStarted = isAfter(now, eventStartTime);
+    const isEventEnded = isAfter(now, eventEndTime);
+    const isUpcoming = isBefore(now, eventStartTime);
+    const isOngoing = isAfter(now, eventStartTime) && isBefore(now, eventEndTime);
 
     const handleDelete = async () => {
         'use server'
@@ -57,17 +81,7 @@ export default async function EventPage({ params, searchParams }: { params: { id
                         {/* Event details */}
                         <div className="lg:col-span-2">
                             <div className="bg-white shadow sm:rounded-lg overflow-hidden">
-                                {event.imageUrl && (
-                                    <div className="w-full h-64 sm:h-80 md:h-96 overflow-hidden">
-                                        <Image
-                                            src={event.imageUrl}
-                                            alt={event.title}
-                                            className="w-full h-full object-cover"
-                                            width={800}
-                                            height={400}
-                                        />
-                                    </div>
-                                )}
+                                <EventImageGallery images={event.imageUrls} />
                                 <div className="px-4 py-5 sm:p-6">
                                     <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">{event.title}</h1>
                                     <div className="mt-4 flex items-center space-x-2">
@@ -86,7 +100,7 @@ export default async function EventPage({ params, searchParams }: { params: { id
                                                 Organisateur
                                             </dt>
                                             <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                                                <Link href='/events/creator/[id]' as={`/events/creator/${event.userId}`} className='hover:underline hover:text-blue-500'>
+                                                <Link href={`/events/creator/${event.userId}`} className='hover:underline hover:text-blue-500'>
                                                     {event.user.first_name} {event.user.last_name}
                                                 </Link>
                                             </dd>
@@ -106,9 +120,72 @@ export default async function EventPage({ params, searchParams }: { params: { id
                                                 Horaires
                                             </dt>
                                             <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                                                {formatDate(event.start_time, 'HH:mm')} - {formatDate(event.end_time, 'HH:mm')}
+                                                {format(eventStartTime, 'HH:mm')} - {format(eventEndTime, 'HH:mm')}
                                             </dd>
                                         </div>
+                                        {event.isOnline && (
+                                            <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5 sm:px-6">
+                                                <dt className="text-sm font-medium text-gray-500 flex items-center">
+                                                    <GlobeAltIcon className="mr-1.5 h-5 w-5 flex-shrink-0 text-gray-400" />
+                                                    {`Type d'événement`}
+                                                </dt>
+                                                <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+                                                    Événement en ligne
+                                                    {isOwner && (
+                                                        <span className="ml-2 text-blue-500">
+                                                            {`Vous êtes l'organisateur`}
+                                                        </span>
+                                                    )}
+                                                    {!isOwner && userHasEventReservation && isUpcoming && (
+                                                        <span className="ml-2 text-green-500">
+                                                            Les détails de connexion seront disponibles le{format(eventStartTime, "d MMMM yyyy 'à' HH:mm", { locale: fr })}
+                                                        </span>
+                                                    )}
+                                                </dd>
+                                            </div>
+                                        )}
+
+                                        {event.isOnline && (
+                                            <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5 sm:px-6">
+                                                <dt className="text-sm font-medium text-gray-500 flex items-center">
+                                                    <VideoCameraIcon className="mr-1.5 h-5 w-5 flex-shrink-0 text-gray-400" />
+                                                    Accès à la réunion
+                                                </dt>
+                                                <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+                                                    {isOwner || (userHasEventReservation && (isOngoing || isEventStarted)) ? (
+                                                        event.meetingType === 'EXTERNAL' ? (
+                                                            <Link href={event.meetingLink}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="text-blue-500 hover:underline"
+                                                            >
+                                                                Rejoindre la réunion externe
+                                                            </Link>
+                                                        ) : (
+                                                            <div className="mt-2">
+                                                                <VideoCall
+                                                                    roomName={`event-${event?.title}-${event.id}`}
+                                                                    displayName={session?.user?.name || 'Participant'}
+                                                                    email={session?.user?.email || 'anonymous@example.com'}
+                                                                />
+                                                            </div>
+                                                        )
+                                                    ) : userHasEventReservation && isUpcoming ? (
+                                                        <p className="text-gray-600">
+                                                            {`L'accès à la réunion sera disponible le ${format(eventStartTime, "d MMMM yyyy 'à' HH:mm", { locale: fr })}`}
+                                                        </p>
+                                                    ) : isEventEnded ? (
+                                                        <p className="text-gray-600">
+                                                            {`Cet événement est terminé. Merci d'avoir participé.`}
+                                                        </p>
+                                                    ) : (
+                                                        <p className="text-gray-600">
+                                                            Réservez votre place pour accéder à la réunion.
+                                                        </p>
+                                                    )}
+                                                </dd>
+                                            </div>
+                                        )}
                                         <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5 sm:px-6">
                                             <dt className="text-sm font-medium text-gray-500 flex items-center">
                                                 <MapPinIcon className="mr-1.5 h-5 w-5 flex-shrink-0 text-gray-400" />
@@ -116,6 +193,7 @@ export default async function EventPage({ params, searchParams }: { params: { id
                                             </dt>
                                             <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{event.location}</dd>
                                         </div>
+
                                         <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5 sm:px-6">
                                             <dt className="text-sm font-medium text-gray-500 flex items-center">
                                                 <UsersIcon className="mr-1.5 h-5 w-5 flex-shrink-0 text-gray-400" />
@@ -132,9 +210,9 @@ export default async function EventPage({ params, searchParams }: { params: { id
                                             </dt>
                                             <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
                                                 <div className="flex flex-wrap gap-2">
-                                                    {event.tags.map((tag: any) => (
-                                                        <span key={tag.tagId} className="inline-flex items-center rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-800">
-                                                            {tag.tag.name}
+                                                    {event.simplifiedTags.map((tag: string) => (
+                                                        <span key={tag} className="inline-flex items-center rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-800">
+                                                            {tag}
                                                         </span>
                                                     ))}
                                                 </div>
@@ -153,8 +231,7 @@ export default async function EventPage({ params, searchParams }: { params: { id
                                 </div>
                             </div>
 
-
-                            {isOwner && new Date(event.event_date) > new Date() && (
+                            {isOwner && isUpcoming && (
                                 <div className="mt-6 flex space-x-3">
                                     <Link href={`/events/${params.id}/edit`}>
                                         <Button className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
@@ -169,9 +246,9 @@ export default async function EventPage({ params, searchParams }: { params: { id
                                         </AlertDialogTrigger>
                                         <AlertDialogContent>
                                             <AlertDialogHeader>
-                                                <AlertDialogTitle>Êtes-vous sûr de vouloir supprimer votre compte ?</AlertDialogTitle>
+                                                <AlertDialogTitle>Êtes-vous sûr de vouloir supprimer cet événement ?</AlertDialogTitle>
                                                 <AlertDialogDescription>
-                                                    Cette action est irréversible. Toutes vos données seront définitivement supprimées.
+                                                    Cette action est irréversible. Toutes les données liées à cet événement seront définitivement supprimées.
                                                 </AlertDialogDescription>
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
@@ -197,36 +274,65 @@ export default async function EventPage({ params, searchParams }: { params: { id
                                         <p>Prix : {event.is_paid ? `${event.price} €` : 'Gratuit'}</p>
                                     </div>
                                     <div className="mt-5">
-                                        {event.availableTickets > 0 && new Date(event.event_date) > new Date() ? (
-                                            isAuthenticated ? (
-                                                !isOwner && (
-                                                    <ReservationForm
-                                                        eventId={event.id}
-                                                        price={event.price}
-                                                        availableTickets={event.availableTickets}
-                                                        isPaid={event.is_paid}
-                                                        eventDate={event.event_date.toISOString()}
-                                                    />
+                                        {isAuthenticated ? (
+                                            !isOwner ? (
+                                                userHasEventReservation && !isOngoing && !isEventEnded ? (
+                                                    <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4">
+                                                        <p className="font-bold">Réservation confirmée</p>
+                                                        <p>{event.isOnline ? "Le lien de connexion sera disponible le jour de l'événement." : "Votre réservation a été enregistrée avec succès."}</p>
+                                                    </div>
+                                                ) : (
+                                                    !isEventEnded && isOngoing && !event.isOnline && (
+                                                        <ReservationForm
+                                                            eventId={event.id}
+                                                            price={event.price}
+                                                            availableTickets={event.availableTickets}
+                                                            isPaid={event.is_paid}
+                                                            eventDate={event.event_date}
+                                                            isOnline={event.isOnline}
+                                                            startTime={event.start_time}
+                                                            endTime={event.end_time}
+                                                        />
+                                                    )
                                                 )
                                             ) : (
-                                                <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4" role="alert">
-                                                    <p className="font-bold">Information</p>
-                                                    <p>Pour réserver cet événement, veuillez vous <Link href="/login" className="underline">connecter</Link> ou <Link href="/register" className="underline">créer un compte</Link>.</p>
-                                                </div>
+                                                <p className="text-sm font-medium text-gray-500">{`Vous êtes l'organisateur de cet événement.`}</p>
                                             )
                                         ) : (
+                                            <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4" role="alert">
+                                                <p className="font-bold">Information</p>
+                                                <p>Pour réserver cet événement, veuillez vous <Link href="/login" className="underline">connecter</Link> ou <Link href="/register" className="underline">créer un compte</Link>.</p>
+                                            </div>
+                                        )}
+                                        {event.availableTickets === 0 && (
                                             <p className="text-sm font-medium text-red-800">
-                                                {event.availableTickets === 0 ? "Plus de places disponibles" : "Cet événement est déjà passé"}
+                                                Plus de places disponibles
+                                            </p>
+                                        )}
+                                        {!isUpcoming && isOngoing && (
+                                            <p className="text-sm font-medium text-yellow-800">
+                                                Cet événement est en cours
+                                            </p>
+                                        )}
+                                        {isEventEnded && (
+                                            <p className="text-sm font-medium text-red-800">
+                                                Cet événement est déjà passé
                                             </p>
                                         )}
                                     </div>
                                 </div>
                             </div>
 
-                            {isOwner && event.is_paid && new Date(event.event_date) > new Date() && (
+                            {isOwner && !isEventEnded && event.is_paid && !isOngoing && (
                                 <div className="bg-white shadow sm:rounded-lg mb-8">
                                     <div className="px-4 py-5 sm:p-6">
-                                        <PromoCodeGenerator eventId={event.id} />
+                                        {isOwner && event.is_paid && (
+                                            <div className="bg-white sm:rounded-lg mb-8">
+                                                <div className="">
+                                                    <PromoCodeGenerator eventId={event.id} />
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )}

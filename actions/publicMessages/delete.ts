@@ -1,4 +1,3 @@
-//actions/publicMessages/delete.ts
 import { prisma } from "@/server/db";
 
 export async function deletePublicMessage(id: string) {
@@ -11,7 +10,6 @@ export async function deletePublicMessage(id: string) {
         });
 
         if (!message) {
-            console.log(`Message with id ${id} not found`);
             return null;
         }
 

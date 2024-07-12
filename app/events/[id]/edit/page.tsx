@@ -17,15 +17,15 @@ export default async function EditEventPage({ params }: { params: { id: string }
 
     return (
         <div className="bg-gray-100 min-h-screen py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-5xl mx-auto"> {/* Increased max-width */}
-                <Card className="bg-gray-50"> {/* Slightly gray background */}
+            <div className="max-w-5xl mx-auto">
+                <Card className="bg-gray-50">
                     <CardHeader className="text-center">
                         <CardTitle className="text-3xl font-bold flex items-center justify-center">
                             <PencilIcon className="w-8 h-8 mr-2" />
                             {`Modifier l'événement`}
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="p-6"> {/* Increased padding */}
+                    <CardContent className="p-6">
                         <Tabs defaultValue="details" className="w-full">
                             <TabsList className="grid w-full grid-cols-4 mb-6">
                                 <TabsTrigger value="details" className="flex items-center">

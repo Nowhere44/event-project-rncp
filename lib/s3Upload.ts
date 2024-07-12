@@ -10,9 +10,7 @@ const s3Client = new S3Client({
 });
 
 export async function uploadToS3(file: File): Promise<string> {
-    console.log("Starting S3 upload");
     const fileName = `${Date.now()}-${file.name}`;
-    console.log("File name:", fileName);
 
     try {
         const command = new PutObjectCommand({
@@ -21,11 +19,8 @@ export async function uploadToS3(file: File): Promise<string> {
             ContentType: file.type,
         });
 
-        console.log("Getting signed URL");
         const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
-        console.log("Signed URL obtained");
 
-        console.log("Uploading file to S3");
         const response = await fetch(signedUrl, {
             method: "PUT",
             body: file,
@@ -34,11 +29,8 @@ export async function uploadToS3(file: File): Promise<string> {
             },
         });
 
-        console.log("S3 upload response:", response.status, response.statusText);
-
         if (response.ok) {
             const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`;
-            console.log("File uploaded successfully:", fileUrl);
             return fileUrl;
         } else {
             throw new Error(`S3 upload failed: ${response.status} ${response.statusText}`);

@@ -1,4 +1,3 @@
-//actions/events/read.ts
 import { prisma } from "@/server/db";
 import { ReservationStatus } from "@prisma/client";
 import { connectToDatabase } from "@/lib/database";
@@ -22,7 +21,8 @@ export async function getEventById(id: string) {
                 include: {
                     user: true
                 }
-            }
+            },
+            images: true
         }
     });
 
@@ -32,16 +32,23 @@ export async function getEventById(id: string) {
         const simplifiedTags = event.tags.map(et => et.tag.name);
         const reservedTickets = event.reservations.reduce((sum, res) => sum + res.numberOfTickets, 0);
         const availableTickets = Math.max(0, event.capacity - reservedTickets);
+
+        const serializedEvent = JSON.parse(JSON.stringify(event, (key, value) =>
+            typeof value === 'object' && value !== null && typeof value.constructor === 'function' && value.constructor.name === 'Decimal'
+                ? parseFloat(value.toString())
+                : value
+        ));
+
         return {
-            ...event,
+            ...serializedEvent,
             simplifiedTags,
             availableTickets,
-            commentsCount
+            commentsCount,
+            imageUrls: event.images.map(img => img.url)
         };
     }
     return event;
 }
-
 
 export async function getUserEvents(userId: string) {
     const events = await prisma.event.findMany({
@@ -61,7 +68,8 @@ export async function getUserEvents(userId: string) {
                         }
                     }
                 }
-            }
+            },
+            images: true
         }
     });
 
@@ -70,7 +78,8 @@ export async function getUserEvents(userId: string) {
         const availableTickets = Math.max(0, event.capacity - reservedTickets);
         return {
             ...event,
-            availableTickets
+            availableTickets,
+            imageUrls: event.images.map(img => img.url)
         };
     });
 }
@@ -127,11 +136,12 @@ export async function getEvents(params: {
         include: {
             tags: { include: { tag: true } },
             reservations: true,
-            user: { select: { id: true, first_name: true, last_name: true, averageRating: true } }
+            user: { select: { id: true, first_name: true, last_name: true, averageRating: true } },
+            images: true
         },
         skip,
         take: limit,
-        orderBy: { event_date: 'asc' }
+        orderBy: { event_date: 'asc' },
     });
 
     const eventsWithAvailableTickets = events.map(event => {
@@ -140,7 +150,7 @@ export async function getEvents(params: {
         return {
             ...event,
             availableTickets,
-            reservations: undefined // Optionnel : retirer les réservations pour réduire la taille des données
+            reservations: undefined
         };
     });
 

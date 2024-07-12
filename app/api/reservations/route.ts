@@ -1,4 +1,3 @@
-//api/reservations/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from "@/auth.config";
@@ -20,10 +19,10 @@ export async function POST(req: NextRequest) {
         });
 
         return NextResponse.json(result);
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error creating reservation or Stripe session:', error);
         return NextResponse.json({
-            error: 'Une erreur est survenue lors de la création de la réservation ou de la session de paiement',
+            error: error.message || 'Une erreur est survenue lors de la création de la réservation ou de la session de paiement',
         }, { status: 500 });
     }
 }

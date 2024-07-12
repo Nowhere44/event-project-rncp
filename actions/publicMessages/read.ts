@@ -1,4 +1,3 @@
-//actions/publicMessages/read.ts
 import { prisma } from "@/server/db";
 
 export async function getPublicMessages() {

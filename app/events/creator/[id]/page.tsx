@@ -14,13 +14,11 @@ const CreatorEvents = () => {
     useEffect(() => {
         const fetchUserData = async () => {
             const userResponse = await fetch(`/api/event-creator/${id}`);
-            console.log('userResponse', userResponse);
             if (userResponse.ok) {
                 const userData = await userResponse.json();
                 setUserData(userData);
             }
             const eventsResponse = await fetch(`/api/event-creator?userId=${id}`);
-            console.log('eventsResponse', eventsResponse);
             if (eventsResponse.ok) {
                 const events = await eventsResponse.json();
                 setUserEvents(events);
