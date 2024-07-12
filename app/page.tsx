@@ -160,7 +160,7 @@ export default function Home() {
             />
           )}
 
-          {events.length > 0 && (
+          {events?.length > 0 && (
             <div className="text-center mt-16">
               <Button size="lg" className="bg-orange-500 hover:bg-orange-600 text-white shadow-lg transition-all duration-300 transform hover:scale-105" asChild>
                 <Link href="/events">Voir tous les événements</Link>

@@ -138,7 +138,7 @@ export default async function EventPage({ params, searchParams }: { params: { id
                                                     )}
                                                     {!isOwner && userHasEventReservation && isUpcoming && (
                                                         <span className="ml-2 text-green-500">
-                                                            Les détails de connexion seront disponibles le{format(eventStartTime, "d MMMM yyyy 'à' HH:mm", { locale: fr })}
+                                                            Les détails de connexion seront disponibles le {format(eventStartTime, "d MMMM yyyy 'à' HH:mm")}
                                                         </span>
                                                     )}
                                                 </dd>
@@ -152,7 +152,7 @@ export default async function EventPage({ params, searchParams }: { params: { id
                                                     Accès à la réunion
                                                 </dt>
                                                 <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                                                    {isOwner || (userHasEventReservation && (isOngoing || isEventStarted)) ? (
+                                                    {(isOwner || userHasEventReservation) && (isOngoing || isEventStarted) && !isEventEnded ? (
                                                         event.meetingType === 'EXTERNAL' ? (
                                                             <Link href={event.meetingLink}
                                                                 target="_blank"
@@ -276,13 +276,8 @@ export default async function EventPage({ params, searchParams }: { params: { id
                                     <div className="mt-5">
                                         {isAuthenticated ? (
                                             !isOwner ? (
-                                                userHasEventReservation && !isOngoing && !isEventEnded ? (
-                                                    <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4">
-                                                        <p className="font-bold">Réservation confirmée</p>
-                                                        <p>{event.isOnline ? "Le lien de connexion sera disponible le jour de l'événement." : "Votre réservation a été enregistrée avec succès."}</p>
-                                                    </div>
-                                                ) : (
-                                                    !isEventEnded && isOngoing && !event.isOnline && (
+                                                !userHasEventReservation ? (
+                                                    !isEventEnded && (
                                                         <ReservationForm
                                                             eventId={event.id}
                                                             price={event.price}
@@ -294,6 +289,12 @@ export default async function EventPage({ params, searchParams }: { params: { id
                                                             endTime={event.end_time}
                                                         />
                                                     )
+                                                ) : (
+                                                    event.isOnline && !isOngoing && !isEventEnded && (
+                                                        <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4">
+                                                            <p className="font-bold">Réservation confirmée</p>
+                                                            <p>{event.isOnline && !isOngoing ? "Le lien de connexion sera disponible le jour de l'événement." : "Votre réservation a été enregistrée avec succès."}</p>
+                                                        </div>)
                                                 )
                                             ) : (
                                                 <p className="text-sm font-medium text-gray-500">{`Vous êtes l'organisateur de cet événement.`}</p>
@@ -310,7 +311,7 @@ export default async function EventPage({ params, searchParams }: { params: { id
                                             </p>
                                         )}
                                         {!isUpcoming && isOngoing && (
-                                            <p className="text-sm font-medium text-yellow-800">
+                                            <p className="text-sm font-medium text-yellow-800 mt-2">
                                                 Cet événement est en cours
                                             </p>
                                         )}
