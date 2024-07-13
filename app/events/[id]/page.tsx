@@ -82,7 +82,7 @@ export default async function EventPage({ params, searchParams }: { params: { id
 
     return (
         <Suspense fallback={<ServerSpinner />}>
-            <main className="bg-gray-50">
+            <main>
                 <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
                     <div className="mx-auto max-w-2xl lg:max-w-none">
                         <div className="lg:grid lg:grid-cols-3 lg:gap-x-8">
