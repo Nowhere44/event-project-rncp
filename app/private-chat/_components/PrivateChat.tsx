@@ -1,9 +1,15 @@
+'use client';
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { pusherClient } from '@/lib/pusher';
 import MessageItem from '@/app/(Messagerie)/chat/_components/MessageItem';
 import GifSearch from '@/app/(Messagerie)/chat/_components/GifSearch';
-import { Send, Smile, X } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import { Send, Smile, X, ArrowLeft } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 interface PrivateMessage {
     id: string;
@@ -23,21 +29,34 @@ interface PrivateChatProps {
     currentUserId: string;
     otherUserId: string;
     otherUserName: string;
+    otherUserProfilePicture?: string;
     onClose: () => void;
 }
 
-const PrivateChat: React.FC<PrivateChatProps> = ({ currentUserId, otherUserId, otherUserName, onClose }) => {
+const PrivateChat: React.FC<PrivateChatProps> = ({
+    currentUserId,
+    otherUserId,
+    otherUserName,
+    otherUserProfilePicture,
+    onClose
+}) => {
     const [messages, setMessages] = useState<PrivateMessage[]>([]);
     const [inputValue, setInputValue] = useState('');
     const [showGifSearch, setShowGifSearch] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const { data: session } = useSession();
+    const [isLoading, setIsLoading] = useState(true);
+
+    const scrollToBottom = useCallback(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, []);
 
     useEffect(() => {
         scrollToBottom();
-    }, [messages]);
+    }, [messages, scrollToBottom]);
 
-    const fetchPrivateMessages = async () => {
+    const fetchPrivateMessages = useCallback(async () => {
+        setIsLoading(true);
         try {
             const response = await fetch(`/api/private-messages?otherUserId=${otherUserId}`);
             if (response.ok) {
@@ -48,9 +67,10 @@ const PrivateChat: React.FC<PrivateChatProps> = ({ currentUserId, otherUserId, o
             }
         } catch (error) {
             console.error('Error fetching private messages:', error);
+        } finally {
+            setIsLoading(false);
         }
-    };
-
+    }, [otherUserId]);
 
     const handleNewMessage = useCallback((message: PrivateMessage) => {
         if (message.senderId === otherUserId || message.receiverId === otherUserId) {
@@ -68,7 +88,7 @@ const PrivateChat: React.FC<PrivateChatProps> = ({ currentUserId, otherUserId, o
         return () => {
             pusherClient.unsubscribe(`private-${currentUserId}`);
         };
-    }, [currentUserId, otherUserId, handleNewMessage]);
+    }, [currentUserId, otherUserId, handleNewMessage, fetchPrivateMessages]);
 
     const handleDeleteMessage = (messageId: string) => {
         setMessages(prev => prev.filter(msg => msg.id !== messageId));
@@ -127,7 +147,6 @@ const PrivateChat: React.FC<PrivateChatProps> = ({ currentUserId, otherUserId, o
             if (!response.ok) {
                 throw new Error('Failed to delete message');
             }
-            // La suppression locale du message est gérée par le gestionnaire d'événements Pusher
         } catch (error) {
             console.error('Error deleting private message:', error);
         }
@@ -143,7 +162,6 @@ const PrivateChat: React.FC<PrivateChatProps> = ({ currentUserId, otherUserId, o
             if (!response.ok) {
                 throw new Error('Failed to edit message');
             }
-            // La modification locale du message est gérée par le gestionnaire d'événements Pusher
         } catch (error) {
             console.error('Error editing private message:', error);
         }
@@ -185,21 +203,15 @@ const PrivateChat: React.FC<PrivateChatProps> = ({ currentUserId, otherUserId, o
         }
     };
 
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    };
-
-    return (
-        <div className="fixed inset-0 z-[1007] flex items-center justify-center bg-black bg-opacity-50 p-4">
-            <div className="bg-white rounded-lg w-full max-w-2xl h-[90vh] flex flex-col shadow-xl">
-                <div className="p-4 border-b flex justify-between items-center bg-gray-100">
-                    <h2 className="text-xl font-bold text-gray-800">{otherUserName}</h2>
-                    <button onClick={onClose} className="text-gray-600 hover:text-gray-800">
-                        <X size={24} />
-                    </button>
-                </div>
-                <div className="flex-grow overflow-y-auto p-4 space-y-4">
-                    {messages.map((message) => (
+    const chatContent = (
+        <>
+            <div className="flex-grow overflow-y-auto p-4 space-y-4">
+                {isLoading ? (
+                    <div className="flex justify-center items-center h-full">
+                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+                    </div>
+                ) : (
+                    messages.map((message) => (
                         <MessageItem
                             key={message.id}
                             message={message}
@@ -207,35 +219,83 @@ const PrivateChat: React.FC<PrivateChatProps> = ({ currentUserId, otherUserId, o
                             onDelete={deleteMessage}
                             onEdit={editMessage}
                         />
-                    ))}
-                    <div ref={messagesEndRef} />
-                </div>
-                <div className="p-4 border-t">
-                    <form onSubmit={sendMessage} className="flex items-center space-x-2">
-                        <button
-                            type="button"
-                            onClick={() => setShowGifSearch(!showGifSearch)}
-                            className="text-gray-500 hover:text-gray-700"
-                        >
-                            <Smile size={24} />
-                        </button>
-                        <input
+                    ))
+                )}
+                <div ref={messagesEndRef} />
+            </div>
+            <div className="p-4 border-t">
+                <form onSubmit={sendMessage} className="flex items-center space-x-2">
+                    <Button
+                        type="button"
+                        onClick={() => setShowGifSearch(!showGifSearch)}
+                        variant="ghost"
+                        size="icon"
+                        className="text-gray-500 hover:text-gray-700"
+                    >
+                        <Smile className="h-6 w-6" />
+                    </Button>
+                    <div className='w-full'>
+                        <Input
                             type="text"
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
-                            className="flex-grow p-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-300"
-                            placeholder="Type a message..."
-                        />
-                        <button type="submit" className="bg-blue-500 text-white rounded-full p-2 hover:bg-blue-600">
-                            <Send size={24} />
-                        </button>
-                    </form>
-                    {showGifSearch && (
-                        <div className="mt-2">
-                            <GifSearch onSend={sendGif} onClose={() => setShowGifSearch(false)} />
-                        </div>
-                    )}
+
+                            placeholder="Tapez un message..."
+                        /></div>
+
+                    <Button type="submit" className="bg-orange-500 text-white hover:bg-orange-600">
+                        <Send className="h-5 w-5" />
+                    </Button>
+                </form>
+                {showGifSearch && (
+                    <div className="mt-2">
+                        <GifSearch onSend={sendGif} onClose={() => setShowGifSearch(false)} />
+                    </div>
+                )}
+            </div>
+        </>
+    );
+
+    // Version mobile
+    if (typeof window !== 'undefined' && window.innerWidth < 400) {
+        return (
+            <Sheet open={true} onOpenChange={onClose}>
+                <SheetContent side="right" className="w-full p-0 flex flex-col">
+                    <SheetHeader className="p-4 border-b">
+                        <SheetTitle className="flex items-center">
+                            <Button onClick={onClose} variant="ghost" size="icon" className="mr-2">
+                                <ArrowLeft className="h-6 w-6" />
+                            </Button>
+                            <Avatar className="h-8 w-8 mr-2">
+                                <AvatarImage src={otherUserProfilePicture} />
+                                <AvatarFallback>{otherUserName[0]}</AvatarFallback>
+                            </Avatar>
+                            {otherUserName}
+                        </SheetTitle>
+                    </SheetHeader>
+                    {chatContent}
+                </SheetContent>
+            </Sheet>
+        );
+    }
+
+    // Version desktop
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 mt-16">
+            <div className="bg-white rounded-lg w-full max-w-2xl h-[90vh] flex flex-col shadow-xl">
+                <div className="p-4 border-b flex justify-between items-center bg-gray-100">
+                    <div className="flex items-center">
+                        <Avatar className="h-8 w-8 mr-2">
+                            <AvatarImage src={otherUserProfilePicture} />
+                            <AvatarFallback>{otherUserName[0]}</AvatarFallback>
+                        </Avatar>
+                        <h2 className="text-xl font-bold text-gray-800">{otherUserName}</h2>
+                    </div>
+                    <Button onClick={onClose} variant="ghost" size="icon">
+                        <X className="h-6 w-6" />
+                    </Button>
                 </div>
+                {chatContent}
             </div>
         </div>
     );

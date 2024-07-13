@@ -1,3 +1,4 @@
+//app
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from "@/auth.config";
 import EventForm from "./_components/event-form";
@@ -14,15 +15,14 @@ export default async function CreateEventPage() {
     }
 
     return (
-        <div className="bg-gray-50 h-full  py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-4xl mx-auto">
+        <div className="h-full place-content-center py-12 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto">
                 <Card>
                     <CardHeader className="text-center">
-                        <CardTitle className="text-3xl font-bold">Créer un nouvel événement</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <Tabs defaultValue="details" className="w-full">
-                            <TabsList className="grid w-full grid-cols-4">
+                            <TabsList className="grid w-full grid-cols-4  bg-orange-50">
                                 <TabsTrigger value="details" className="flex items-center">
                                     <CalendarIcon className="w-5 h-5 mr-2" />
                                     Détails

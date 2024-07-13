@@ -1,4 +1,3 @@
-// app/profile/[id]/page.tsx
 'use client'
 
 import { useSession } from 'next-auth/react';
@@ -17,6 +16,7 @@ import { fr } from 'date-fns/locale';
 import { Button } from "@/components/ui/button";
 import * as XLSX from 'xlsx';
 import { CalendarIcon, TicketIcon, CurrencyEuroIcon, EnvelopeIcon, ClockIcon, TagIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
+import Spinner from "@/components/ui/spinner";
 
 export default function ProfilePage() {
     const { data: session, status } = useSession();
@@ -26,26 +26,34 @@ export default function ProfilePage() {
     const [userEvents, setUserEvents] = useState<IEvent[]>([]);
     const [userReservations, setUserReservations] = useState<IReservation[]>([]);
     const [userData, setUserData] = useState<IUser | null>(null);
+    const [isLoadingEvents, setIsLoadingEvents] = useState(true);
 
     useEffect(() => {
         const fetchUserData = async () => {
             if (session?.user?.id === id) {
-                const userResponse = await fetch(`/api/users/${id}`);
-                if (userResponse.ok) {
-                    const userData = await userResponse.json();
-                    setUserData(userData);
-                }
+                setIsLoadingEvents(true);
+                try {
+                    const userResponse = await fetch(`/api/users/${id}`);
+                    if (userResponse.ok) {
+                        const userData = await userResponse.json();
+                        setUserData(userData);
+                    }
 
-                const eventsResponse = await fetch(`/api/user-events?userId=${id}`);
-                if (eventsResponse.ok) {
-                    const events = await eventsResponse.json();
-                    setUserEvents(events);
-                }
+                    const eventsResponse = await fetch(`/api/user-events?userId=${id}`);
+                    if (eventsResponse.ok) {
+                        const events = await eventsResponse.json();
+                        setUserEvents(events);
+                    }
 
-                const reservationsResponse = await fetch(`/api/user-reservations?userId=${id}`);
-                if (reservationsResponse.ok) {
-                    const reservations = await reservationsResponse.json();
-                    setUserReservations(reservations);
+                    const reservationsResponse = await fetch(`/api/user-reservations?userId=${id}`);
+                    if (reservationsResponse.ok) {
+                        const reservations = await reservationsResponse.json();
+                        setUserReservations(reservations);
+                    }
+                } catch (error) {
+                    console.error("Erreur lors du chargement des données:", error);
+                } finally {
+                    setIsLoadingEvents(false);
                 }
             }
         };
@@ -80,7 +88,11 @@ export default function ProfilePage() {
         XLSX.writeFile(workbook, "reservations.xlsx");
     };
 
-    if (status === 'loading') return <div className="flex justify-center items-center h-screen">Chargement...</div>;
+    if (status === 'loading') return (
+        <div className="flex justify-center items-center h-screen">
+            <Spinner />
+        </div>
+    );
     if (status === 'unauthenticated') {
         router.push('/login');
         return null;
@@ -91,7 +103,7 @@ export default function ProfilePage() {
     }
 
     return (
-        <div className="bg-gray-100 py-12 h-full">
+        <div className="py-12 h-full">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <h1 className="text-3xl font-bold text-gray-900 mb-8">Profil</h1>
 
@@ -224,15 +236,21 @@ export default function ProfilePage() {
                         <CalendarIcon className="h-6 w-6 mr-2 text-orange-500" />
                         Tous mes événements
                     </h2>
-                    <EventList
-                        data={userEvents}
-                        emptyTitle="Vous n'avez pas encore créé d'événements"
-                        emptyStateSubtext="Commencez à créer vos propres événements!"
-                        collectionType="Events_Organized"
-                        limit={10}
-                        page={1}
-                        totalPages={1}
-                    />
+                    {isLoadingEvents ? (
+                        <div className="flex justify-center items-center h-[350px]">
+                            <Spinner />
+                        </div>
+                    ) : (
+                        <EventList
+                            data={userEvents}
+                            emptyTitle="Vous n'avez pas encore créé d'événements"
+                            emptyStateSubtext="Commencez à créer vos propres événements!"
+                            collectionType="Events_Organized"
+                            limit={10}
+                            page={1}
+                            totalPages={1}
+                        />
+                    )}
                 </div>
             </div>
         </div>

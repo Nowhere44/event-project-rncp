@@ -1,3 +1,4 @@
+//app/events/create/_components/event-form.tsx
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -206,7 +207,7 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
     };
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+        <form onSubmit={handleSubmit(onSubmit)}>
             <TabsContent value="details">
                 <div className="space-y-6">
                     <div>
@@ -246,7 +247,7 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                                     placeholder="URL de l'image"
                                     disabled={imageUrls.length + imageFiles.length >= 5}
                                 />
-                                <Button type="button" onClick={handleImageUrlAdd} disabled={imageUrls.length + imageFiles.length >= 5}>
+                                <Button type="button" className='bg-orange-500 hover:bg-orange-600' onClick={handleImageUrlAdd} disabled={imageUrls.length + imageFiles.length >= 5}>
                                     Ajouter URL
                                 </Button>
                             </div>
@@ -448,7 +449,7 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
             <TabsContent value="tags">
                 <div className='space-y-6'>
                     <h3 className="text-lg font-semibold">Tags</h3>
-                    <div className="flex flex-wrap gap-2 p-4 border rounded-lg bg-gray-50 max-h-40 overflow-y-auto">
+                    <div className="flex flex-wrap gap-2 p-4 border rounded-lg bg-orange-50 max-h-40 overflow-y-auto">
                         {availableTags.map((tag) => (
                             <button
                                 key={tag.id}
@@ -460,7 +461,7 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                                     setValue('tags', newTags);
                                 }}
                                 className={`px-3 py-1 rounded-full text-sm transition-all ${selectedTags.includes(tag.name)
-                                    ? 'bg-blue-500 text-white hover:bg-blue-600'
+                                    ? 'bg-orange-500 text-white hover:bg-orange-600'
                                     : 'bg-white text-gray-700 hover:bg-gray-200 border border-gray-300'
                                     }`}
                             >
@@ -475,7 +476,7 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                             placeholder="Nouveau tag"
                             className="flex-grow"
                         />
-                        <Button type="button" onClick={handleAddTag} className="whitespace-nowrap">
+                        <Button type="button" onClick={handleAddTag} className="whitespace-nowrap bg-orange-500 hover:bg-orange-600">
                             Ajouter
                         </Button>
                     </div>
@@ -521,7 +522,7 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                 <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="px-6 py-2"
+                    className="px-6 py-2 bg-orange-500 hover:bg-orange-600"
                 >
                     {isSubmitting ? 'Envoi en cours...' : eventId ? 'Mettre à jour' : 'Créer l\'événement'}
                 </Button>

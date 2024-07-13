@@ -32,7 +32,7 @@ const EventCard = ({ event, hasOrderLink, hidePrice }: CardProps) => {
                         <Image
                             src={event?.images[0]?.url || '/placeholder.jpg'}
                             alt={event.title}
-                            className="object-cover w-full h-full rounded-t-lg"
+                            className="object-cover w-full h-full"
                             width={500}
                             height={500}
                         />

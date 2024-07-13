@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Button } from "@/components/ui/button"
 import { CalendarIcon, TicketIcon, CurrencyEuroIcon } from '@heroicons/react/24/outline'
 import Image from 'next/image';
+import Spinner from "@/components/ui/spinner";
 
 export default function ReservationDetailPage() {
     const params = useParams();
@@ -128,7 +129,11 @@ export default function ReservationDetailPage() {
     };
 
     if (error) return <div>Erreur: {error}</div>;
-    if (!reservation) return <div>Chargement...</div>;
+    if (!reservation) return (
+        <div className="flex justify-center items-center h-screen">
+            <Spinner />
+        </div>
+    );
 
     return (
         <div className="container mx-auto px-4 py-8">

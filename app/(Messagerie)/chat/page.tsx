@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { pusherClient } from '@/lib/pusher';
-import { Smile, Menu } from 'lucide-react';
+import { Smile, Menu, Send } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import MessageItem from './_components/MessageItem';
 import UserList from './_components/UserList';
 import GifSearch from './_components/GifSearch';
 import PrivateChat from '../../private-chat/_components/PrivateChat';
+
 
 interface Message {
     id: string;
@@ -41,6 +42,16 @@ const ChatPage = () => {
     const [suggestions, setSuggestions] = useState<User[]>([]);
     const [userNotifications, setUserNotifications] = useState<{ [key: string]: number }>({});
     const messagesEndRef = useRef<null | HTMLDivElement>(null);
+    const [isLoadingUsers, setIsLoadingUsers] = useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+    const scrollToBottom = useCallback(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, []);
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages, scrollToBottom]);
 
     const handleNewMessage = useCallback((message: Message) => {
         setMessages((prev) => {
@@ -76,11 +87,13 @@ const ChatPage = () => {
     }, []);
 
     const fetchUsers = async () => {
+        setIsLoadingUsers(true);
         const response = await fetch('/api/users');
         if (response.ok) {
             const data = await response.json();
             setUsers(data);
         }
+        setIsLoadingUsers(false);
     };
 
     const fetchMessages = async () => {
@@ -179,6 +192,7 @@ const ChatPage = () => {
     const startPrivateChat = (user: User) => {
         setSelectedUser(user);
         setUserNotifications(prev => ({ ...prev, [user.id]: 0 }));
+        setIsSidebarOpen(false);
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -209,7 +223,7 @@ const ChatPage = () => {
         setSuggestions([]);
     };
 
-    if (!session) return <div>Please sign in to access the chat.</div>;
+    if (!session) return <div className='h-full flex items-center justify-center text-orange-500'>Please sign in to access the chat.</div>;
 
     return (
         <div className="flex flex-1 overflow-hidden h-full">
@@ -222,13 +236,14 @@ const ChatPage = () => {
                     }))}
                     currentUserId={session.user.id}
                     onUserClick={startPrivateChat}
+                    isLoading={isLoadingUsers}
                 />
             </div>
 
             {/* Zone de chat principale */}
             <div className="flex-1 flex flex-col">
                 <div className="bg-white border-b border-gray-200 p-4 flex items-center justify-between">
-                    <Sheet>
+                    <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
                         <SheetTrigger asChild>
                             <Button variant="ghost" size="icon" className="md:hidden">
                                 <Menu className="h-5 w-5" />
@@ -241,9 +256,8 @@ const ChatPage = () => {
                                     notificationCount: userNotifications[user.id] || 0
                                 }))}
                                 currentUserId={session.user.id}
-                                onUserClick={(user) => {
-                                    setSelectedUser(user);
-                                }}
+                                onUserClick={startPrivateChat}
+                                isLoading={isLoadingUsers}
                             />
                         </SheetContent>
                     </Sheet>
@@ -283,7 +297,9 @@ const ChatPage = () => {
                                 placeholder="Type a message"
                             />
                         </div>
-                        <Button type="submit">Send</Button>
+                        <Button type="submit" className="bg-orange-500 text-white hover:bg-orange-600">
+                            <Send className="h-5 w-5" />
+                        </Button>
                     </form>
                     {showGifSearch && (
                         <div className="mt-2">

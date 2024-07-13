@@ -1,7 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Edit2, Trash2 } from 'lucide-react';
+'use client';
+
+import React, { useState, useEffect, useRef } from 'react';
+import { Edit2, Trash2, Check, X } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import Image from 'next/image';
+import { motion } from 'framer-motion';
 
 interface MessageItemProps {
     message: {
@@ -12,6 +17,7 @@ interface MessageItemProps {
         sender: {
             id: string;
             first_name: string;
+            profile_picture?: string;
         };
         createdAt: string;
         editableUntil: string;
@@ -25,6 +31,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, currentUserId, onDel
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(message.content);
     const [canEditOrDelete, setCanEditOrDelete] = useState(false);
+    const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         const checkEditability = () => {
@@ -39,6 +46,12 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, currentUserId, onDel
         return () => clearInterval(timer);
     }, [message.editableUntil]);
 
+    useEffect(() => {
+        if (isEditing && inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, [isEditing]);
+
     const handleEdit = () => {
         if (editContent.trim() !== message.content) {
             onEdit(message.id, editContent);
@@ -46,39 +59,80 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, currentUserId, onDel
         setIsEditing(false);
     };
 
+    const handleCancel = () => {
+        setEditContent(message.content);
+        setIsEditing(false);
+    };
+
     const isOwnMessage = message.senderId === currentUserId;
 
     return (
-        <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-4`}>
-            <div className={`max-w-[70%] ${isOwnMessage ? 'bg-blue-500 text-white' : 'bg-gray-200'} rounded-lg p-3 shadow-sm`}>
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.2 }}
+            className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-4`}
+        >
+            {!isOwnMessage && (
+                <Avatar className="w-8 h-8 mr-2">
+                    <AvatarImage src={message.sender.profile_picture} alt={message.sender.first_name} />
+                    <AvatarFallback>{message.sender.first_name[0]}</AvatarFallback>
+                </Avatar>
+            )}
+            <div className={`max-w-[70%] ${isOwnMessage ? 'bg-orange-500 text-white' : 'bg-gray-200'} rounded-lg p-3 shadow-sm`}>
                 {!isOwnMessage && <p className="text-xs font-semibold mb-1">{message.sender.first_name}</p>}
                 {message.type === 'gif' ? (
                     <Image src={message.content} alt="GIF" width={200} height={200} className="max-w-full rounded" />
                 ) : isEditing ? (
-                    <input
-                        type="text"
-                        value={editContent}
-                        onChange={(e) => setEditContent(e.target.value)}
-                        onBlur={handleEdit}
-                        onKeyPress={(e) => e.key === 'Enter' && handleEdit()}
-                        className="w-full p-1 border rounded text-black"
-                        autoFocus
-                    />
+                    <div className="flex items-center">
+                        <input
+                            ref={inputRef}
+                            type="text"
+                            value={editContent}
+                            onChange={(e) => setEditContent(e.target.value)}
+                            className="w-full p-1 border rounded text-black mr-2"
+                        />
+                        <Button onClick={handleEdit} variant="ghost" size="icon" className="h-6 w-6 text-green-500">
+                            <Check className="h-4 w-4" />
+                        </Button>
+                        <Button onClick={handleCancel} variant="ghost" size="icon" className="h-6 w-6 text-red-500">
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </div>
                 ) : (
                     <p>{message.content}</p>
                 )}
             </div>
             {isOwnMessage && !isEditing && canEditOrDelete && (
                 <div className="ml-2 flex flex-col justify-center">
-                    <Button onClick={() => setIsEditing(true)} variant="ghost" size="icon" className="h-6 w-6">
-                        <Edit2 className="h-4 w-4" />
-                    </Button>
-                    <Button onClick={() => onDelete(message.id)} variant="ghost" size="icon" className="h-6 w-6 text-red-500">
-                        <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button onClick={() => setIsEditing(true)} variant="ghost" size="icon" className="h-6 w-6">
+                                    <Edit2 className="h-4 w-4" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Modifier</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button onClick={() => onDelete(message.id)} variant="ghost" size="icon" className="h-6 w-6 text-red-500">
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Supprimer</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
                 </div>
             )}
-        </div>
+        </motion.div>
     );
 };
 

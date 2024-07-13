@@ -11,6 +11,7 @@ import SearchFilter from './events/_components/search-filter'
 import dynamic from 'next/dynamic'
 import { motion } from 'framer-motion'
 import { Calendar, MapPin, Users, Star, Clock, Zap } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton';
 
 const EventMap = dynamic(() => import('./events/_components/event-map'), { ssr: false })
 
@@ -146,7 +147,11 @@ export default function Home() {
           </div>
 
           {isLoading ? (
-            <p className="text-center py-8 text-gray-600">Chargement des événements...</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[...Array(3)].map((_, index) => (
+                <Skeleton key={index} className="h-[350px] w-full rounded-xl" />
+              ))}
+            </div>
           ) : (
             <EventList
               data={events}
@@ -160,7 +165,7 @@ export default function Home() {
             />
           )}
 
-          {events?.length > 0 && (
+          {!isLoading && events?.length > 0 && (
             <div className="text-center mt-16">
               <Button size="lg" className="bg-orange-500 hover:bg-orange-600 text-white shadow-lg transition-all duration-300 transform hover:scale-105" asChild>
                 <Link href="/events">Voir tous les événements</Link>

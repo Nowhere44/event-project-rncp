@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import Spinner from "@/components/ui/spinner";
 
 export default function LoginForm() {
     const [email, setEmail] = useState('');
@@ -35,7 +36,11 @@ export default function LoginForm() {
     };
 
     if (status === 'loading') {
-        return <div>Chargement...</div>;
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <Spinner />
+            </div>
+        );
     }
 
     if (status === 'authenticated') {
@@ -79,7 +84,7 @@ export default function LoginForm() {
                     />
                 </div>
                 {error && <p className="text-red-500 text-center">{error}</p>}
-                <Button type="submit" className="w-full">
+                <Button type="submit" className="w-full bg-orange-500 hover:bg-orange-600">
                     Se connecter
                 </Button>
             </form>
