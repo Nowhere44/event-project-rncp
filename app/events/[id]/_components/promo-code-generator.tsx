@@ -99,7 +99,7 @@ const PromoCodeGenerator: React.FC<PromoCodeGeneratorProps> = ({ eventId }) => {
                 <Button
                     onClick={handleGeneratePromoCodes}
                     disabled={isLoading}
-                    className="w-full justify-center"
+                    className="w-full justify-center bg-orange-500 hover:bg-orange-600 text-white"
                 >
                     {isLoading ? 'Génération...' : 'Générer les codes'}
                 </Button>

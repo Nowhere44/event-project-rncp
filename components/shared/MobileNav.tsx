@@ -47,7 +47,7 @@ const MobileNav = () => {
                             handleLogout();
                             closeSheet();
                         }}
-                        className="w-full bg-orange-500 hover:bg-orange-600 text-white"
+                        className="w-full bg-red-500 hover:bg-red-600 text-white"
                     >
                         Déconnexion
                     </Button>

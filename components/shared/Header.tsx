@@ -28,7 +28,7 @@ const Header = () => {
                                     variant='default'
                                     size="lg"
                                     onClick={() => signOut({ callbackUrl: '/' })}
-                                    className="bg-orange-500 hover:bg-orange-600 text-white"
+                                    className="bg-red-500 hover:bg-red-600 text-white"
                                 >
                                     Déconnexion
                                 </Button>

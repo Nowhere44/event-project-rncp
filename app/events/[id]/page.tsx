@@ -244,7 +244,7 @@ export default async function EventPage({ params, searchParams }: { params: { id
                                 {isOwner && isUpcoming && (
                                     <div className="mt-6 flex space-x-3">
                                         <Link href={`/events/${params.id}/edit`}>
-                                            <Button className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                            <Button className="inline-flex items-center rounded-md bg-orange-500 px-3 py-2 text-sm font-semibold text-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-orange-600">
                                                 Modifier
                                             </Button>
                                         </Link>

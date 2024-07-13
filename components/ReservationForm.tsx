@@ -161,7 +161,7 @@ const ReservationForm: React.FC<ReservationFormProps> = ({ eventId, price, avail
                             onChange={(e) => setPromoCode(e.target.value)}
                             className="flex-1 rounded-none rounded-l-md border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                         />
-                        <Button type="button" onClick={validatePromoCode} className="rounded-none rounded-r-md">
+                        <Button type="button" onClick={validatePromoCode} className="rounded-none rounded-r-md bg-orange-500 hover:bg-orange-600 text-white">
                             Appliquer
                         </Button>
                     </div>
@@ -169,7 +169,7 @@ const ReservationForm: React.FC<ReservationFormProps> = ({ eventId, price, avail
             )}
             <p className="text-lg font-semibold">Total : {isPaid ? `${totalPrice.toFixed(2)} €` : 'Gratuit'}</p>
             {error && <p className="text-red-500">{error}</p>}
-            <Button type="submit" disabled={availableTickets === 0 || isSubmitting} className="w-full">
+            <Button type="submit" disabled={availableTickets === 0 || isSubmitting} className="w-full bg-orange-500 hover:bg-orange-600 text-white">
                 {isSubmitting ? 'Traitement en cours...' : availableTickets === 0 ? 'Complet' : isPaid ? 'Payer' : 'Réserver'}
             </Button>
         </form>
