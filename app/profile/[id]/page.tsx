@@ -178,9 +178,9 @@ export default function ProfilePage() {
                                                                         <CalendarIcon className="h-4 w-4 text-orange-400" />
                                                                         <span>Âge: {calculateAge(reservation.user?.date_of_birth)}</span>
                                                                     </div>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <EnvelopeIcon className="h-4 w-4 text-orange-400" />
-                                                                        <span>Email: {reservation.user?.email}</span>
+                                                                    <div className="col-span-2 flex items-center gap-2 overflow-hidden">
+                                                                        <EnvelopeIcon className="h-4 w-4 flex-shrink-0 text-orange-400" />
+                                                                        <span className="truncate">{reservation.user?.email}</span>
                                                                     </div>
                                                                     <div className="col-span-2 flex items-center gap-2">
                                                                         <ClockIcon className="h-4 w-4 text-orange-400" />

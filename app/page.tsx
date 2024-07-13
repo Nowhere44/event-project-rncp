@@ -30,11 +30,11 @@ export default function Home() {
   const fetchEvents = useCallback(async (filters = {}) => {
     setIsLoading(true);
     try {
-
-      const allEventsResponse = await fetch(`/api/events`);
+      const queryParams = new URLSearchParams(filters);
+      const allEventsResponse = await fetch(`/api/events?${queryParams}`);
       const allEventsData = await allEventsResponse.json();
 
-      const limitedEventsResponse = await fetch(`/api/events?limit=3`);
+      const limitedEventsResponse = await fetch(`/api/events?${queryParams}&limit=3`);
       const limitedEventsData = await limitedEventsResponse.json();
 
       setEvents(limitedEventsData.events);
@@ -50,6 +50,10 @@ export default function Home() {
       setIsLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
 
   useEffect(() => {
     fetchEvents({ limit: 6 });
@@ -154,7 +158,7 @@ export default function Home() {
             </div>
           ) : (
             <EventList
-              data={events}
+              data={events.slice(0, 3)}
               emptyTitle="Aucun événement trouvé"
               emptyStateSubtext="Revenez bientôt pour découvrir de nouveaux événements passionnants"
               collectionType="All_Events"

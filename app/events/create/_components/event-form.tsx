@@ -1,4 +1,3 @@
-//app/events/create/_components/event-form.tsx
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -17,7 +16,7 @@ import { useLoadScript } from '@react-google-maps/api';
 import { Libraries } from '@react-google-maps/api/dist/utils/make-load-script-url';
 import { format, setHours, setMinutes } from 'date-fns';
 import { fr } from 'date-fns/locale';
-
+import Spinner from '@/components/ui/spinner';
 
 registerLocale('fr', fr);
 
@@ -43,8 +42,10 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
     const [imageFiles, setImageFiles] = useState<File[]>([]);
     const [imageUrls, setImageUrls] = useState<string[]>(defaultValues?.imageUrls || []);
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+    const [isAddingTag, setIsAddingTag] = useState(false);
+    const [isNavigating, setIsNavigating] = useState(false);
 
-    const { register, handleSubmit, control, watch, setError, setValue, formState: { errors } } = useForm({
+    const { register, handleSubmit, control, watch, setError, setValue, formState: { errors, isValid } } = useForm({
         defaultValues: defaultValues ? {
             ...defaultValues,
             tags: defaultValues.simplifiedTags || [],
@@ -70,6 +71,7 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
             meetingType: null,
             meetingLink: '',
         },
+        mode: 'onChange'
     });
 
     const isPaid = watch('is_paid');
@@ -81,7 +83,6 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
         googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string,
         libraries: libraries,
     });
-
 
     useEffect(() => {
         if (defaultValues?.imageUrls) {
@@ -124,6 +125,7 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
 
     const onSubmit = async (data: any) => {
         setIsSubmitting(true);
+        setIsNavigating(true);
         try {
             const formData = new FormData();
             Object.keys(data).forEach(key => {
@@ -163,6 +165,7 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
             router.refresh();
         } catch (error) {
             console.error('Error submitting event:', error);
+            setIsNavigating(false);
         } finally {
             setIsSubmitting(false);
         }
@@ -170,6 +173,7 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
 
     const handleAddTag = async () => {
         if (newTag.trim() !== '') {
+            setIsAddingTag(true);
             try {
                 const response = await fetch('/api/tags', {
                     method: 'POST',
@@ -186,6 +190,8 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                 }
             } catch (error) {
                 console.error('Error creating tag:', error);
+            } finally {
+                setIsAddingTag(false);
             }
         }
     };
@@ -206,15 +212,30 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
         }
     };
 
+    const handleCancel = () => {
+        setIsNavigating(true);
+        router.back();
+    };
+
+    const isFormValid = () => {
+        return isValid && (imageUrls.length > 0 || imageFiles.length > 0);
+    };
+
+    if (isNavigating) {
+        return <div className='inset-0 absolute h-screen bg-white flex items-center justify-center'>
+            <Spinner />
+        </div>;
+    }
+
     return (
-        <form onSubmit={handleSubmit(onSubmit)}>
-            <TabsContent value="details">
-                <div className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col h-full w-full">
+            <div className="flex-grow overflow-y-auto">
+                <TabsContent value="details" className="space-y-6">
                     <div>
                         <label htmlFor="title" className="block text-sm font-medium text-gray-700">{`Titre de l'événement`}</label>
                         <Input
                             id="title"
-                            {...register('title')}
+                            {...register('title', { required: "Le titre est obligatoire" })}
                             placeholder="Titre de l'événement"
                         />
                         {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title.message as string}</p>}
@@ -224,7 +245,7 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                         <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
                         <Textarea
                             id="description"
-                            {...register('description')}
+                            {...register('description', { required: "La description est obligatoire" })}
                             placeholder="Description de l'événement"
                             className="h-32"
                         />
@@ -255,16 +276,16 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                         <div className="mt-2 flex flex-wrap gap-2">
                             {imagePreviews.map((preview, index) => (
                                 <div key={`file-${index}`} className="relative">
-                                    <Image src={preview} alt={`Preview ${index + 1}`} width={100} height={100} className="rounded-lg" />
-                                    <button type="button" onClick={() => removeImage(index, 'file')} className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1">
+                                    <Image src={preview} alt={`Preview ${index + 1}`} width={100} height={100} className="rounded-lg object-cover" />
+                                    <button type="button" onClick={() => removeImage(index, 'file')} className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center">
                                         X
                                     </button>
                                 </div>
                             ))}
                             {imageUrls.map((url, index) => (
                                 <div key={`url-${index}`} className="relative">
-                                    <Image src={url} alt={`URL Image ${index + 1}`} width={100} height={100} className="rounded-lg" />
-                                    <button type="button" onClick={() => removeImage(index, 'url')} className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1">
+                                    <Image src={url} alt={`URL Image ${index + 1}`} width={100} height={100} className="rounded-lg object-cover" />
+                                    <button type="button" onClick={() => removeImage(index, 'url')} className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center">
                                         X
                                     </button>
                                 </div>
@@ -278,6 +299,7 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                             <Controller
                                 name="event_date"
                                 control={control}
+                                rules={{ required: "La date est obligatoire" }}
                                 render={({ field }) => (
                                     <DatePicker
                                         id="event_date"
@@ -304,6 +326,7 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                                 )}
                             />
                         </div>
+                        {errors.event_date && <p className="mt-1 text-sm text-red-600">{errors.event_date.message as string}</p>}
                     </div>
 
                     <div className="grid grid-cols-2 gap-8">
@@ -313,6 +336,7 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                                 <Controller
                                     name="start_time"
                                     control={control}
+                                    rules={{ required: "L'heure de début est obligatoire" }}
                                     render={({ field }) => (
                                         <DatePicker
                                             id="start_time"
@@ -333,14 +357,15 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                                     )}
                                 />
                             </div>
+                            {errors.start_time && <p className="mt-1 text-sm text-red-600">{errors.start_time.message as string}</p>}
                         </div>
 
                         <div>
                             <label htmlFor="end_time" className="block text-sm font-medium text-gray-700">Heure de fin</label>
                             <div className='-ml-4'>
                                 <Controller
-                                    name="end_time"
-                                    control={control}
+                                    name="end_time" control={control}
+                                    rules={{ required: "L'heure de fin est obligatoire" }}
                                     render={({ field }) => (
                                         <DatePicker
                                             id="end_time"
@@ -361,6 +386,7 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                                     )}
                                 />
                             </div>
+                            {errors.end_time && <p className="mt-1 text-sm text-red-600">{errors.end_time.message as string}</p>}
                         </div>
                     </div>
 
@@ -395,133 +421,149 @@ const EventForm = ({ userId, eventId, defaultValues }: EventFormProps) => {
                                     <Input
                                         id="meetingLink"
                                         type="url"
-                                        {...register('meetingLink')}
+                                        {...register('meetingLink', { required: isOnline && meetingType === 'EXTERNAL' ? "Le lien de la réunion est obligatoire pour un événement en ligne externe" : false })}
                                         placeholder="https://exemple.com/reunion"
                                     />
+                                    {errors.meetingLink && <p className="mt-1 text-sm text-red-600">{errors.meetingLink.message as string}</p>}
                                 </div>
                             )}
                         </div>
                     )}
-                </div>
-            </TabsContent>
+                </TabsContent>
 
-            <TabsContent value="location">
-                <div className='space-y-6'>
-                    <label htmlFor="location" className="block text-sm font-medium text-gray-700">{`Lieu de l'événement`}</label>
-                    {isLoaded ? (
-                        <input
-                            id="location"
-                            {...register('location')}
-                            placeholder="Lieu de l'événement"
-                            className="w-full p-2 border rounded-md"
-                            defaultValue={defaultValues?.location || ''}
-                            ref={(ref) => {
-                                if (ref) {
-                                    autocompleteRef.current = new google.maps.places.Autocomplete(ref);
-                                    autocompleteRef.current.addListener('place_changed', handlePlaceSelect);
-                                }
-                            }}
-                        />
-                    ) : (
-                        <Input
-                            id="location"
-                            {...register('location')}
-                            placeholder="Lieu de l'événement"
-                            defaultValue={defaultValues?.location || ''}
-                        />
-                    )}
-                    {errors.location && <p className="mt-1 text-sm text-red-600">{errors.location.message as string}</p>}
-                </div>
-
-                <div className="mt-4">
-                    <label htmlFor="capacity" className="block text-sm font-medium text-gray-700">Capacité</label>
-                    <Input
-                        id="capacity"
-                        type="number"
-                        {...register('capacity', { valueAsNumber: true })}
-                        placeholder="Capacité"
-                        min={1}
-                    />
-                    {errors.capacity && <p className="mt-1 text-sm text-red-600">{errors.capacity.message as string}</p>}
-                </div>
-            </TabsContent>
-
-            <TabsContent value="tags">
-                <div className='space-y-6'>
-                    <h3 className="text-lg font-semibold">Tags</h3>
-                    <div className="flex flex-wrap gap-2 p-4 border rounded-lg bg-orange-50 max-h-40 overflow-y-auto">
-                        {availableTags.map((tag) => (
-                            <button
-                                key={tag.id}
-                                type="button"
-                                onClick={() => {
-                                    const newTags = selectedTags.includes(tag.name)
-                                        ? selectedTags.filter((t: any) => t !== tag.name)
-                                        : [...selectedTags, tag.name];
-                                    setValue('tags', newTags);
+                <TabsContent value="location" className="space-y-6">
+                    <div>
+                        <label htmlFor="location" className="block text-sm font-medium text-gray-700">{`Lieu de l'événement`}</label>
+                        {isLoaded ? (
+                            <input
+                                id="location"
+                                {...register('location', { required: !isOnline ? "Le lieu est obligatoire pour un événement en présentiel" : false })}
+                                placeholder="Lieu de l'événement"
+                                className="w-full p-2 border rounded-md"
+                                defaultValue={defaultValues?.location || ''}
+                                ref={(ref) => {
+                                    if (ref) {
+                                        autocompleteRef.current = new google.maps.places.Autocomplete(ref);
+                                        autocompleteRef.current.addListener('place_changed', handlePlaceSelect);
+                                    }
                                 }}
-                                className={`px-3 py-1 rounded-full text-sm transition-all ${selectedTags.includes(tag.name)
-                                    ? 'bg-orange-500 text-white hover:bg-orange-600'
-                                    : 'bg-white text-gray-700 hover:bg-gray-200 border border-gray-300'
-                                    }`}
-                            >
-                                {tag.name}
-                            </button>
-                        ))}
-                    </div>
-                    <div className="flex gap-2">
-                        <Input
-                            value={newTag}
-                            onChange={(e) => setNewTag(e.target.value)}
-                            placeholder="Nouveau tag"
-                            className="flex-grow"
-                        />
-                        <Button type="button" onClick={handleAddTag} className="whitespace-nowrap bg-orange-500 hover:bg-orange-600">
-                            Ajouter
-                        </Button>
-                    </div>
-                </div>
-            </TabsContent>
-
-            <TabsContent value="pricing">
-                <div className='space-y-6'>
-                    <div className="flex items-center space-x-2">
-                        <Controller
-                            name="is_paid"
-                            control={control}
-                            render={({ field }) => (
-                                <Checkbox
-                                    id="is_paid"
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                />
-                            )}
-                        />
-                        <label htmlFor="is_paid" className="text-sm font-medium text-gray-700">Événement payant</label>
-                    </div>
-                    {isPaid && (
-                        <div>
-                            <label htmlFor="price" className="block text-sm font-medium text-gray-700">Prix</label>
-                            <Input
-                                id="price"
-                                type="number"
-                                step="0.01"
-                                {...register('price', { valueAsNumber: true })}
-                                placeholder="Prix"
                             />
-                            {errors.price && <p className="mt-1 text-sm text-red-600">{errors.price.message as string}</p>}
-                        </div>
-                    )}
-                </div>
-            </TabsContent>
+                        ) : (
+                            <Input
+                                id="location"
+                                {...register('location', { required: !isOnline ? "Le lieu est obligatoire pour un événement en présentiel" : false })}
+                                placeholder="Lieu de l'événement"
+                                defaultValue={defaultValues?.location || ''}
+                            />
+                        )}
+                        {errors.location && <p className="mt-1 text-sm text-red-600">{errors.location.message as string}</p>}
+                    </div>
 
-            <div className="flex justify-end space-x-4 mt-10">
-                <Button type="button" onClick={() => router.back()} variant="outline">
+                    <div>
+                        <label htmlFor="capacity" className="block text-sm font-medium text-gray-700">Capacité</label>
+                        <Input
+                            id="capacity"
+                            type="number"
+                            {...register('capacity', {
+                                valueAsNumber: true,
+                                required: "La capacité est obligatoire",
+                                min: { value: 2, message: "La capacité minimum est de 2 personnes" }
+                            })}
+                            placeholder="Capacité"
+                            min={2}
+                        />
+                        {errors.capacity && <p className="mt-1 text-sm text-red-600">{errors.capacity.message as string}</p>}
+                    </div>
+                </TabsContent>
+
+                <TabsContent value="tags" className="space-y-6">
+                    <div>
+                        <h3 className="text-lg font-semibold">Tags</h3>
+                        <div className="flex flex-wrap gap-2 p-4 border rounded-lg bg-orange-50 max-h-40 overflow-y-auto">
+                            {availableTags.map((tag) => (
+                                <button
+                                    key={tag.id}
+                                    type="button"
+                                    onClick={() => {
+                                        const newTags = selectedTags.includes(tag.name)
+                                            ? selectedTags.filter((t: any) => t !== tag.name)
+                                            : [...selectedTags, tag.name];
+                                        setValue('tags', newTags);
+                                    }}
+                                    className={`px-3 py-1 rounded-full text-sm transition-all ${selectedTags.includes(tag.name)
+                                        ? 'bg-orange-500 text-white hover:bg-orange-600'
+                                        : 'bg-white text-gray-700 hover:bg-gray-200 border border-gray-300'
+                                        }`}
+                                >
+                                    {tag.name}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="flex gap-2 mt-2">
+                            <Input
+                                value={newTag}
+                                onChange={(e) => setNewTag(e.target.value)}
+                                placeholder="Nouveau tag"
+                                className="flex-grow"
+                            />
+                            <Button
+                                type="button"
+                                onClick={handleAddTag}
+                                className="whitespace-nowrap bg-orange-500 hover:bg-orange-600"
+                                disabled={isAddingTag || newTag.trim() === ''}
+                            >
+                                {isAddingTag ? 'Ajout...' : 'Ajouter'}
+                            </Button>
+                        </div>
+                    </div>
+                </TabsContent>
+
+                <TabsContent value="pricing" className="space-y-6">
+                    <div>
+                        <div className="flex items-center space-x-2">
+                            <Controller
+                                name="is_paid"
+                                control={control}
+                                render={({ field }) => (
+                                    <Checkbox
+                                        id="is_paid"
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                    />
+                                )}
+                            />
+                            <label htmlFor="is_paid" className="text-sm font-medium text-gray-700">Événement payant</label>
+                        </div>
+                        {isPaid && (
+                            <div className="mt-2">
+                                <label htmlFor="price" className="block text-sm font-medium text-gray-700">Prix</label>
+                                <Input
+                                    id="price"
+                                    type="number"
+                                    step="0.01"
+                                    {...register('price', {
+                                        valueAsNumber: true,
+                                        required: isPaid ? "Le prix est obligatoire pour un événement payant" : false,
+                                        min: { value: 1, message: "Le prix minimum est de 1" }
+                                    })}
+                                    placeholder="Prix"
+                                    min={1}
+                                />
+                                {errors.price && <p className="mt-1 text-sm text-red-600">{errors.price.message as string}</p>}
+                            </div>
+                        )}
+
+                    </div>
+                </TabsContent>
+            </div>
+
+            <div className="flex justify-end space-x-4 mt-6 pt-4">
+                <Button type="button" onClick={handleCancel} variant="outline">
                     Annuler
                 </Button>
                 <Button
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !isFormValid()}
                     className="px-6 py-2 bg-orange-500 hover:bg-orange-600"
                 >
                     {isSubmitting ? 'Envoi en cours...' : eventId ? 'Mettre à jour' : 'Créer l\'événement'}

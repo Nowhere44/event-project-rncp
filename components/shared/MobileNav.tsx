@@ -41,13 +41,12 @@ const MobileNav = () => {
                 </nav>
                 <div>
                     <Button
-                        variant='default'
+                        variant='outline'
                         size="lg"
                         onClick={() => {
                             handleLogout();
                             closeSheet();
                         }}
-                        className="w-full bg-red-500 hover:bg-red-600 text-white"
                     >
                         Déconnexion
                     </Button>

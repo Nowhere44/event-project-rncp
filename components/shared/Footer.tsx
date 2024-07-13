@@ -7,7 +7,7 @@ const Footer = () => {
                 <Link href='/' className="flex items-center space-x-2">
                     <span className="text-xl font-bold text-orange-500">Evy</span>
                 </Link>
-                <p className="text-sm text-gray-600">© 2024 Event Connect. Tous droits réservés.</p>
+                <p className="text-sm text-gray-600">© 2024 Evy. Tous droits réservés.<span className="font-bold">(Omar Almoctar COULIBALY)</span></p>
             </div>
         </footer>
     )

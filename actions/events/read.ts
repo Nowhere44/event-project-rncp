@@ -91,9 +91,10 @@ export async function getEvents(params: {
     page?: number,
     limit?: number,
     isPaid?: boolean,
+    isOnline?: boolean,
     date?: Date
 }) {
-    const { userId, search, category, page = 1, limit = 10, isPaid, date } = params;
+    const { userId, search, category, page = 1, limit = 10, isPaid, isOnline, date } = params;
     const skip = (page - 1) * limit;
 
     const currentDate = new Date();
@@ -106,9 +107,10 @@ export async function getEvents(params: {
                 },
             },
             {
-                end_time: {
-                    gte: currentDate,
-                },
+                AND: [
+                    { event_date: { lt: currentDate } },
+                    { end_time: { gte: currentDate } },
+                ],
             },
         ],
     };
@@ -118,18 +120,26 @@ export async function getEvents(params: {
         where.OR = [
             { title: { contains: search, mode: 'insensitive' } },
             { description: { contains: search, mode: 'insensitive' } },
+            { tags: { some: { tag: { name: { contains: search, mode: 'insensitive' } } } } }
         ];
     }
     if (category) {
         where.tags = {
             some: {
                 tag: {
-                    name: { in: category.split(',') },
+                    name: category,
                 },
             },
         };
     }
     if (isPaid !== undefined) where.is_paid = isPaid;
+    if (isOnline !== undefined) where.isOnline = isOnline;
+    if (date) {
+        where.OR[0].event_date.gte = date;
+    }
+
+    console.log('Query params:', params);
+    console.log('Where clause:', where);
 
     const events = await prisma.event.findMany({
         where,

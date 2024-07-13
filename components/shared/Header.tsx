@@ -25,10 +25,9 @@ const Header = () => {
                         <div className='flex items-center space-x-4'>
                             <div className='hidden md:block'>
                                 <Button
-                                    variant='default'
+                                    variant='outline'
                                     size="lg"
                                     onClick={() => signOut({ callbackUrl: '/' })}
-                                    className="bg-red-500 hover:bg-red-600 text-white"
                                 >
                                     Déconnexion
                                 </Button>

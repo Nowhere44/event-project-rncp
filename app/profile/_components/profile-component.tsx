@@ -265,28 +265,28 @@ export default function ProfileComponent({ userId, userData }: { userId: string;
                                     </div>
                                 </>
                             ) : (
-                                <div className="space-y-2 text-center">
-                                    <div className='flex items-center justify-center gap-1'>
-                                        <UserIcon className="h-5 w-5 text-orange-500" />
-                                        <h2 className="text-2xl font-bold text-gray-800">{formData.firstName} <span className='uppercase'>{formData.lastName}</span></h2>
-                                    </div>
-                                    <div>
-                                        {userData?.totalRevenue && Number(userData.totalRevenue) > 0 && (
-                                            <p className="font-semibold">Revenu total: <span className="text-orange-500">{Number(userData.totalRevenue).toFixed(2)} €</span></p>
-                                        )}
+                                <div className="flex flex-col gap-4">
+                                    <div className='text-gray-600 flex'>
+                                        <UserIcon className="h-5 w-5 mr-2 text-orange-500" />
+                                        {formData.firstName}  <span className='ml-1 uppercase font-bold'> {formData.lastName}</span>
                                     </div>
 
-                                    <div className="text-gray-600 flex items-center justify-center">
+                                    <div className="text-gray-600 flex">
                                         <EnvelopeIcon className="h-5 w-5 mr-2 text-orange-500" />
                                         {formData.email}
                                     </div>
-                                    <div className="text-gray-600 flex items-center justify-center">
+                                    <div className="text-gray-600 flex">
                                         <CalendarIcon className="h-5 w-5 mr-2 text-orange-500" />
                                         {formData.dateOfBirth?.toLocaleDateString()}
                                     </div>
-                                    <div className='flex items-center justify-center gap-1'>
-                                        <PencilIcon className="h-5 w-5 text-orange-500" />
-                                        <p className="text-gray-700 mt-4">{formData.description || "Aucune description"}</p>
+                                    <div className='text-gray-600 flex items-center'>
+                                        <PencilIcon className="h-5 w-5 mr-2 text-orange-500" />
+                                        {formData.description || "Aucune description"}
+                                    </div>
+                                    <div>
+                                        {userData?.totalRevenue && Number(userData.totalRevenue) > 0 && (
+                                            <p className="font-semibold text-center">Revenu total sur la plateforme: <span className="text-green-500">{Number(userData.totalRevenue).toFixed(2)} €</span></p>
+                                        )}
                                     </div>
 
                                 </div>

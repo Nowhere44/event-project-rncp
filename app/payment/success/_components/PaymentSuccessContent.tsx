@@ -39,7 +39,7 @@ export function PaymentSuccessContent() {
     }
 
     if (status === 'loading') {
-        return <div className="flex justify-center items-center h-screen">Vérification du paiement en cours...</div>;
+        return <div className="flex justify-center items-center text-orange-500 h-screen">Vérification du paiement en cours...</div>;
     }
 
     if (status === 'error') {
@@ -92,7 +92,7 @@ export function PaymentSuccessContent() {
                 </CardContent>
                 <CardFooter>
                     <Link href={`/events/${eventDetails?.eventId}`}>
-                        <Button>{`Voir les détails de l'événement`}</Button>
+                        <Button className='bg-orange-500 hover:bg-orange-600'>{`Voir les détails de l'événement`}</Button>
                     </Link>
                 </CardFooter>
             </Card>

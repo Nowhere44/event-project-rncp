@@ -110,7 +110,7 @@ export default async function EventPage({ params, searchParams }: { params: { id
                                                     Organisateur
                                                 </dt>
                                                 <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                                                    <Link href={`/events/creator/${event.userId}`} className='hover:underline hover:text-blue-500'>
+                                                    <Link href={`/events/creator/${event.userId}`} className='hover:underline text-blue-500'>
                                                         {event.user.first_name} {event.user.last_name}
                                                     </Link>
                                                 </dd>
@@ -148,7 +148,7 @@ export default async function EventPage({ params, searchParams }: { params: { id
                                                         )}
                                                         {!isOwner && userHasEventReservation && isUpcoming && (
                                                             <span className="ml-2 text-green-500">
-                                                                Les détails de connexion seront disponibles le {format(eventStartTime, "d MMMM yyyy 'à' HH:mm")}
+                                                                Les détails de connexion seront disponibles le  {format(eventStartTime, "d MMMM yyyy 'à' HH:mm", { locale: fr })}
                                                             </span>
                                                         )}
                                                     </dd>
@@ -162,7 +162,7 @@ export default async function EventPage({ params, searchParams }: { params: { id
                                                         Accès à la réunion
                                                     </dt>
                                                     <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                                                        {(isOwner || userHasEventReservation) && (isOngoing || isEventStarted) && !isEventEnded ? (
+                                                        {(isOwner && (isUpcoming || isOngoing || isEventStarted)) || userHasEventReservation && (isOngoing || isEventStarted) && !isEventEnded ? (
                                                             event.meetingType === 'EXTERNAL' ? (
                                                                 <Link href={event.meetingLink}
                                                                     target="_blank"
@@ -188,7 +188,7 @@ export default async function EventPage({ params, searchParams }: { params: { id
                                                             <p className="text-gray-600">
                                                                 {`Cet événement est terminé. Merci d'avoir participé.`}
                                                             </p>
-                                                        ) : (
+                                                        ) : !isOwner && (
                                                             <p className="text-gray-600">
                                                                 Réservez votre place pour accéder à la réunion.
                                                             </p>
@@ -286,7 +286,7 @@ export default async function EventPage({ params, searchParams }: { params: { id
                                         <div className="mt-5">
                                             {isAuthenticated ? (
                                                 !isOwner ? (
-                                                    !userHasEventReservation ? (
+                                                    (event.isOnline && !userHasEventReservation) || (!event.isOnline) ? (
                                                         !isEventEnded && (
                                                             <ReservationForm
                                                                 eventId={event.id}

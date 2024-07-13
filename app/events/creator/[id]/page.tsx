@@ -53,7 +53,7 @@ const CreatorEvents = () => {
         <div className="p-14">
             <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
                 <CheckBadgeIcon className="h-12 w-12 mr-2 text-red-500" />
-                {` Tous les événements de ${userData?.first_name} ${userData?.last_name}`}
+                {` Tous les événements de ${userData?.first_name} ${userData?.last_name}`} <span className='text-red-500'> (Passés, en cours et à venir)</span>
             </h2>
             <div className='p-12'>
                 <EventList

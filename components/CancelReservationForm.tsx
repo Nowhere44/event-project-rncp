@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+import { se } from 'date-fns/locale';
 
 interface CancelReservationFormProps {
     reservationId: string;
@@ -18,6 +20,7 @@ const CancelReservationForm: React.FC<CancelReservationFormProps> = ({
     const [ticketsToCancel, setTicketsToCancel] = useState(1);
     const [error, setError] = useState<string | null>(null);
     const router = useRouter();
+    const { data: session } = useSession();
 
     const handleCancel = async () => {
         const now = new Date();
@@ -43,7 +46,7 @@ const CancelReservationForm: React.FC<CancelReservationFormProps> = ({
 
             const result = await response.json();
             if (result.redirect) {
-                router.push(result.redirect);
+                router.push(`/profile/${session?.user?.id}`);
             } else {
                 onCancel();
             }

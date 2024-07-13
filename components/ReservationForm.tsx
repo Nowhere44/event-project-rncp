@@ -109,9 +109,9 @@ const ReservationForm: React.FC<ReservationFormProps> = ({ eventId, price, avail
 
     const totalPrice = isPaid ? (price || 0) * numberOfTickets * (1 - discount / 100) : 0;
 
-    const userHasReservation = false; // Cette valeur devrait être déterminée dynamiquement
+    const userHasReservation = false;
 
-    if (isEventEnded) {
+    if (isOnline && userHasReservation) {
         return (
             <div className="bg-gray-100 border-l-4 border-gray-500 text-gray-700 p-4">
                 <p className="font-bold">Événement terminé</p>

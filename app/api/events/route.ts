@@ -62,14 +62,24 @@ export async function POST(req: NextRequest) {
 
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
-    const params = {
+    const params: any = {
         search: searchParams.get('search') || undefined,
         category: searchParams.get('category') || undefined,
-        isPaid: searchParams.get('isPaid') === 'true' ? true : searchParams.get('isPaid') === 'false' ? false : undefined,
-        date: searchParams.get('date') ? new Date(searchParams.get('date')!) : undefined,
         page: parseInt(searchParams.get('page') || '1'),
         limit: parseInt(searchParams.get('limit') || '10')
     };
+
+    if (searchParams.has('isPaid')) {
+        params.isPaid = searchParams.get('isPaid') === 'true';
+    }
+    if (searchParams.has('isOnline')) {
+        params.isOnline = searchParams.get('isOnline') === 'true';
+    }
+    if (searchParams.get('date')) {
+        params.date = new Date(searchParams.get('date')!);
+    }
+
+    console.log('Received params:', params);
 
     try {
         const { events, total, totalPages } = await getEvents(params);

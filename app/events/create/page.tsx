@@ -16,13 +16,13 @@ export default async function CreateEventPage() {
 
     return (
         <div className="h-full place-content-center py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-7xl mx-auto">
-                <Card>
-                    <CardHeader className="text-center">
+            <div className="max-w-5xl mx-auto">
+                <Card className="flex flex-col h-[980px]">
+                    <CardHeader>
                     </CardHeader>
-                    <CardContent>
-                        <Tabs defaultValue="details" className="w-full">
-                            <TabsList className="grid w-full grid-cols-4  bg-orange-50">
+                    <CardContent className="flex-grow flex flex-col overflow-hidden">
+                        <Tabs defaultValue="details" className="flex flex-col h-full">
+                            <TabsList className="grid w-full grid-cols-4 bg-orange-50">
                                 <TabsTrigger value="details" className="flex items-center">
                                     <CalendarIcon className="w-5 h-5 mr-2" />
                                     Détails
@@ -40,7 +40,7 @@ export default async function CreateEventPage() {
                                     Tarification
                                 </TabsTrigger>
                             </TabsList>
-                            <div className="mt-6">
+                            <div className="flex-grow overflow-hidden">
                                 <EventForm userId={session.user.id} />
                             </div>
                         </Tabs>

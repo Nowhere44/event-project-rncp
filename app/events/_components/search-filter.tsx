@@ -13,6 +13,7 @@ import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { debounce } from 'lodash'
 import { Suspense } from 'react';
+import Spinner from '@/components/ui/spinner'
 
 interface Tag {
     id: string;
@@ -28,9 +29,11 @@ const SearchFilter: React.FC<SearchFilterProps> = ({ onFilterChange }) => {
     const [tags, setTags] = useState<string[]>([])
     const [date, setDate] = useState<Date | null>(null)
     const [isPaid, setIsPaid] = useState<boolean | null>(null)
+    const [isOnline, setIsOnline] = useState<boolean | null>(null)
     const [availableTags, setAvailableTags] = useState<Tag[]>([])
     const router = useRouter()
     const searchParams = useSearchParams()
+    const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchTags = async () => {
@@ -50,38 +53,31 @@ const SearchFilter: React.FC<SearchFilterProps> = ({ onFilterChange }) => {
     useEffect(() => {
         const filters: any = {};
         if (query) filters.search = query;
-        if (tags.length > 0) filters.category = tags.join(',');
+        if (selectedTag && selectedTag !== 'all') filters.category = selectedTag;
         if (date) filters.date = date.toISOString();
         if (isPaid !== null) filters.isPaid = isPaid.toString();
+        if (isOnline !== null) filters.isOnline = isOnline.toString();
 
-        const debouncedFilterChange = debounce((filters) => {
-            onFilterChange(filters);
-        }, 300);
-
-        debouncedFilterChange(filters);
+        onFilterChange(filters);
 
         // Mise à jour de l'URL
-        const params = new URLSearchParams(searchParams)
+        const params = new URLSearchParams(searchParams);
         Object.entries(filters).forEach(([key, value]) => {
             if (value) {
-                params.set(key, value as string)
+                params.set(key, value as string);
             } else {
-                params.delete(key)
+                params.delete(key);
             }
-        })
-        router.push(`?${params.toString()}`, { scroll: false })
-    }, [query, tags, date, isPaid, onFilterChange, router, searchParams]);
+        });
+        router.push(`?${params.toString()}`, { scroll: false });
+    }, [query, selectedTag, date, isPaid, isOnline, onFilterChange, router, searchParams]);
 
-    const handleTagChange = (tagName: string) => {
-        setTags(prev =>
-            prev.includes(tagName)
-                ? prev.filter(t => t !== tagName)
-                : [...prev, tagName]
-        )
-    }
+    const handleTagChange = (value: string) => {
+        setSelectedTag(value === 'all' ? null : value);
+    };
 
     return (
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<div className='flex items-center justify-center'><Spinner /></div>}>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Input
                     type="text"
@@ -89,11 +85,12 @@ const SearchFilter: React.FC<SearchFilterProps> = ({ onFilterChange }) => {
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                 />
-                <Select onValueChange={handleTagChange}>
+                <Select value={selectedTag || 'all'} onValueChange={handleTagChange}>
                     <SelectTrigger>
                         <SelectValue placeholder="Tags" />
                     </SelectTrigger>
                     <SelectContent>
+                        <SelectItem value="all">Tous les tags</SelectItem>
                         {availableTags.map(tag => (
                             <SelectItem key={tag.id} value={tag.name}>
                                 {tag.name}
@@ -133,6 +130,14 @@ const SearchFilter: React.FC<SearchFilterProps> = ({ onFilterChange }) => {
                             onCheckedChange={(checked) => setIsPaid(checked ? false : null)}
                         />
                         <label htmlFor="isFree">Gratuit</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <Checkbox
+                            id="isOnline"
+                            checked={isOnline === true}
+                            onCheckedChange={(checked) => setIsOnline(checked ? true : null)}
+                        />
+                        <label htmlFor="isOnline">En ligne</label>
                     </div>
                 </div>
             </div>
