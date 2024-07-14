@@ -33,6 +33,7 @@ import { fr } from 'date-fns/locale';
 import dynamic from 'next/dynamic';
 import ServerSpinner from '@/components/ui/server-spinner';
 
+
 const ClientSpinner = dynamic(() => import('@/components/ui/client-spinner'), {
     ssr: false,
     loading: () => <ServerSpinner />
@@ -84,6 +85,8 @@ export default async function EventPage({ params, searchParams }: { params: { id
         const date = parseISO(dateString);
         return format(date, 'HH:mm', { locale: fr });
     };
+
+
     return (
         <Suspense fallback={<ServerSpinner />}>
             <main>

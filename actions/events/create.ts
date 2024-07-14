@@ -1,7 +1,7 @@
 import { prisma } from "@/server/db";
 
 export async function createEvent(eventData: any, userId: string) {
-    const { images = [], tags = [], title, description, ...otherData } = eventData;
+    const { images = [], tags = [], title, description, start_time, end_time, ...otherData } = eventData;
 
     if (!title) {
         throw new Error("Le titre est requis");
@@ -11,6 +11,8 @@ export async function createEvent(eventData: any, userId: string) {
         data: {
             title,
             description,
+            start_time,
+            end_time,
             ...otherData,
             userId,
             tags: {
