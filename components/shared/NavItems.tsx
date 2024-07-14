@@ -14,7 +14,7 @@ const NavItems: React.FC<NavItemsProps> = ({ closeSheet }) => {
     const { data: session } = useSession();
 
     const isCreateEventActive = pathname === '/events/create' || pathname.startsWith('/verification');
-    const isEventsActive = pathname === '/events' || pathname.startsWith('/event');
+    const isEventsActive = pathname === '/events' || pathname.startsWith('/event') && !pathname.startsWith('/events/create');
 
     const headerLinks = [
         { label: 'Accueil', route: '/' },

@@ -80,6 +80,10 @@ export default async function EventPage({ params, searchParams }: { params: { id
         redirect('/events');
     }
 
+    const formatLocalTime = (dateString: string) => {
+        const date = parseISO(dateString);
+        return format(date, 'HH:mm', { locale: fr });
+    };
     return (
         <Suspense fallback={<ServerSpinner />}>
             <main>
@@ -130,7 +134,7 @@ export default async function EventPage({ params, searchParams }: { params: { id
                                                     Horaires
                                                 </dt>
                                                 <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                                                    {format(eventStartTime, 'HH:mm')} - {format(eventEndTime, 'HH:mm')}
+                                                    {formatLocalTime(event.start_time)} - {formatLocalTime(event.end_time)}
                                                 </dd>
                                             </div>
                                             {event.isOnline && (

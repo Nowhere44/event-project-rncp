@@ -22,8 +22,15 @@ export async function POST(req: NextRequest) {
             if (value !== null) {
                 if (field === 'tags') {
                     eventData[field] = JSON.parse(value as string);
-                } else if (field === 'event_date' || field === 'start_time' || field === 'end_time') {
-                    eventData[field] = new Date(value as string);
+                } else if (field === 'event_date') {
+                    // Convertir en format ISO-8601 sans modifier l'heure
+                    eventData[field] = new Date(value as string).toISOString().split('T')[0];
+                } else if (field === 'start_time' || field === 'end_time') {
+                    // Combiner la date et l'heure, puis convertir en UTC
+                    const date = new Date(formData.get('event_date') as string);
+                    const [hours, minutes] = (value as string).split(':');
+                    date.setHours(parseInt(hours), parseInt(minutes));
+                    eventData[field] = date.toISOString();
                 } else if (field === 'capacity' || field === 'price') {
                     eventData[field] = Number(value);
                 } else if (field === 'is_paid' || field === 'isOnline') {
