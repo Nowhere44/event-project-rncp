@@ -9,6 +9,7 @@ import { AspectRatio } from "@/components/ui/aspect-ratio"
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import Image from 'next/image'
+import { CheckCircle } from 'lucide-react'
 
 type CardProps = {
     event: IEvent,
@@ -84,6 +85,9 @@ const EventCard = ({ event, hasOrderLink, hidePrice }: CardProps) => {
                         <span className="text-sm font-medium">
                             {event.user?.first_name} {event.user?.last_name}
                         </span>
+                        {event.user?.isVerified && (
+                            <CheckCircle className="h-4 w-4 text-orange-500" />
+                        )}
                     </div>
                     <div className="flex items-center">
                         {event.user?.averageRating && (

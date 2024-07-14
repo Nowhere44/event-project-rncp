@@ -146,7 +146,7 @@ export async function getEvents(params: {
         include: {
             tags: { include: { tag: true } },
             reservations: true,
-            user: { select: { id: true, first_name: true, last_name: true, averageRating: true } },
+            user: { select: { id: true, first_name: true, last_name: true, averageRating: true, isVerified: true } },
             images: true
         },
         skip,

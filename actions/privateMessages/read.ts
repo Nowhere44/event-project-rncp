@@ -13,12 +13,14 @@ export async function getPrivateMessages(userId: string, otherUserId: string) {
                 select: {
                     id: true,
                     first_name: true,
+                    isVerified: true,
                 },
             },
             receiver: {
                 select: {
                     id: true,
                     first_name: true,
+                    isVerified: true,
                 },
             },
         },

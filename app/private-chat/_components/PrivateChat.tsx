@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { CheckCircle } from 'lucide-react';
 
 interface PrivateMessage {
     id: string;
@@ -20,6 +21,8 @@ interface PrivateMessage {
     sender: {
         id: string;
         first_name: string;
+        profile_picture?: string;
+        isVerified?: boolean;
     };
     createdAt: string;
     editableUntil: string;
@@ -31,6 +34,7 @@ interface PrivateChatProps {
     otherUserName: string;
     otherUserProfilePicture?: string;
     onClose: () => void;
+    isVerified?: boolean;
 }
 
 const PrivateChat: React.FC<PrivateChatProps> = ({
@@ -38,7 +42,8 @@ const PrivateChat: React.FC<PrivateChatProps> = ({
     otherUserId,
     otherUserName,
     otherUserProfilePicture,
-    onClose
+    onClose,
+    isVerified
 }) => {
     const [messages, setMessages] = useState<PrivateMessage[]>([]);
     const [inputValue, setInputValue] = useState('');
@@ -267,8 +272,6 @@ const PrivateChat: React.FC<PrivateChatProps> = ({
                                 <ArrowLeft className="h-6 w-6" />
                             </Button>
                             <Avatar className="h-8 w-8 mr-2">
-                                <AvatarImage src={otherUserProfilePicture} />
-                                <AvatarFallback>{otherUserName[0]}</AvatarFallback>
                             </Avatar>
                             {otherUserName}
                         </SheetTitle>
@@ -284,13 +287,19 @@ const PrivateChat: React.FC<PrivateChatProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 mt-16">
             <div className="bg-white rounded-lg w-full max-w-2xl h-[90vh] flex flex-col shadow-xl">
                 <div className="p-4 border-b flex justify-between items-center bg-gray-100">
-                    <div className="flex items-center">
-                        <Avatar className="h-8 w-8 mr-2">
-                            <AvatarImage src={otherUserProfilePicture} />
-                            <AvatarFallback>{otherUserName[0]}</AvatarFallback>
-                        </Avatar>
+
+                    <div className='flex gap-2 items-center'>
+                        <div className="relative">
+                            <Avatar className="w-10 h-10">
+                                <AvatarImage src={otherUserProfilePicture} />
+                            </Avatar>
+                            {isVerified && (
+                                <CheckCircle className="h-4 w-4 text-orange-500 absolute -bottom-1 -right-1 bg-white rounded-full" />
+                            )}
+                        </div>
                         <h2 className="text-xl font-bold text-gray-800">{otherUserName}</h2>
                     </div>
+
                     <Button onClick={onClose} variant="ghost" size="icon">
                         <X className="h-6 w-6" />
                     </Button>

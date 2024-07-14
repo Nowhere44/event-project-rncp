@@ -40,6 +40,7 @@ export const authOptions: NextAuthOptions = {
                     lastName: user.last_name,
                     role: user.role,
                     image: user.profile_picture,
+                    isVerified: user.isVerified,
                 };
             }
         })
@@ -53,6 +54,7 @@ export const authOptions: NextAuthOptions = {
                 token.lastName = user.lastName;
                 token.role = user.role;
                 token.image = user.image;
+                token.isVerified = user.isVerified;
             }
             return token;
         },
@@ -64,6 +66,7 @@ export const authOptions: NextAuthOptions = {
                 session.user.lastName = token.lastName as string;
                 session.user.role = token.role as Role;
                 session.user.image = token.image as string | undefined;
+                session.user.isVerified = token.isVerified as boolean;
             }
             return session;
         }

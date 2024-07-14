@@ -7,6 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import Image from 'next/image';
 import { motion } from 'framer-motion';
+import { CheckCircle } from 'lucide-react';
 
 interface MessageItemProps {
     message: {
@@ -18,6 +19,7 @@ interface MessageItemProps {
             id: string;
             first_name: string;
             profile_picture?: string;
+            isVerified?: boolean;
         };
         createdAt: string;
         editableUntil: string;
@@ -75,13 +77,21 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, currentUserId, onDel
             className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-4`}
         >
             {!isOwnMessage && (
-                <Avatar className="w-8 h-8 mr-2">
-                    <AvatarImage src={message.sender.profile_picture} alt={message.sender.first_name} />
-                    <AvatarFallback>{message.sender.first_name[0]}</AvatarFallback>
-                </Avatar>
+                <div className="flex items-center -mr-8">
+                    <Avatar className="w-8 h-8">
+                        <AvatarImage src={message.sender.profile_picture} alt={message.sender.first_name} />
+                    </Avatar>
+                </div>
             )}
             <div className={`max-w-[70%] ${isOwnMessage ? 'bg-orange-500 text-white' : 'bg-gray-200'} rounded-lg p-3 shadow-sm`}>
-                {!isOwnMessage && <p className="text-xs font-semibold mb-1">{message.sender.first_name}</p>}
+                {!isOwnMessage && (
+                    <p className="text-xs font-semibold mb-1 flex items-center">
+                        {message.sender.first_name}
+                        {message.sender.isVerified && (
+                            <CheckCircle className="h-3 w-3 text-orange-500 ml-1" />
+                        )}
+                    </p>
+                )}
                 {message.type === 'gif' ? (
                     <Image src={message.content} alt="GIF" width={200} height={200} className="max-w-full rounded" />
                 ) : isEditing ? (

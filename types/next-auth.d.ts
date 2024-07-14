@@ -9,6 +9,7 @@ declare module "next-auth" {
         lastName: string;
         role: Role;
         image?: string | null;
+        isVerified?: boolean;
     }
 
     interface Session {
@@ -24,5 +25,6 @@ declare module "next-auth/jwt" {
         lastName: string;
         role: Role;
         image?: string | null;
+        isVerified?: boolean;
     }
 }

@@ -13,11 +13,32 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
-
 enum Role {
   User
   Admin
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum MeetingType {
+  EXTERNAL
+  INTEGRATED
+}
+
+enum ReservationStatus {
+  Pending
+  Confirmed
+  Cancelled
+}
+
+enum PaymentStatus {
+  Pending
+  Paid
+  Failed
 }
 
 model User {
@@ -45,6 +66,23 @@ model User {
   usedPromoCodes PromoCode[]
   resetPasswordToken String?
   resetPasswordExpires DateTime?
+  isVerified Boolean @default(false)
+  verificationRequest VerificationRequest?
+}
+
+model VerificationRequest {
+  id String @id @default(cuid())
+  userId String @unique
+  user User @relation(fields: [userId], references: [id])
+  idDocumentUrl String
+  status VerificationStatus @default(PENDING)
+  submittedAt DateTime @default(now())
+  reviewedAt DateTime?
+  reviewedBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isArchived Boolean @default(false)
+  @@unique([userId, isArchived])
 }
 
 model Account {
@@ -102,11 +140,6 @@ model Image {
    @@unique([eventId, url])
 }
 
-enum MeetingType {
-  EXTERNAL
-  INTEGRATED
-}
-
 model PromoCode {
   id        String   @id @default(cuid())
   code      String   @unique
@@ -114,7 +147,7 @@ model PromoCode {
   eventId   String
   event     Event    @relation(fields: [eventId], references: [id])
   used      Boolean  @default(false)
-    usedById   String?
+  usedById   String?
   usedByUser User?    @relation(fields: [usedById], references: [id])
   usedAt     DateTime?
   createdAt DateTime @default(now())
@@ -152,12 +185,6 @@ model Reservation {
     createdAt DateTime @default(now())
 }
 
-enum ReservationStatus {
-  Pending
-  Confirmed
-  Cancelled
-}
-
 model Payment {
   id            String        @id @default(cuid())
   reservationId String        @unique
@@ -166,12 +193,6 @@ model Payment {
   paymentMethod String
   status        PaymentStatus
   reservation   Reservation   @relation(fields: [reservationId], references: [id])
-}
-
-enum PaymentStatus {
-  Pending
-  Paid
-  Failed
 }
 
 model Message {

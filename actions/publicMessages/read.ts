@@ -10,6 +10,8 @@ export async function getPublicMessages() {
                 select: {
                     id: true,
                     first_name: true,
+                    last_name: true,
+                    isVerified: true,
                 }
             }
         },

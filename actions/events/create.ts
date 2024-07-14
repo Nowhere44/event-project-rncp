@@ -1,3 +1,4 @@
+//action to create an event
 import { prisma } from "@/server/db";
 
 export async function createEvent(eventData: any, userId: string) {

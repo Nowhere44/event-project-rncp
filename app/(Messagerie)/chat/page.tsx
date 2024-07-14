@@ -21,6 +21,7 @@ interface Message {
     sender: {
         id: string;
         first_name: string;
+        isVerified: boolean;
     };
     createdAt: string;
     editableUntil: string;
@@ -30,6 +31,7 @@ interface User {
     id: string;
     first_name: string;
     profile_picture: string;
+    isVerified?: boolean;
 }
 
 const ChatPage = () => {
@@ -328,6 +330,8 @@ const ChatPage = () => {
                     otherUserId={selectedUser.id}
                     otherUserName={selectedUser.first_name}
                     onClose={() => setSelectedUser(null)}
+                    otherUserProfilePicture={selectedUser.profile_picture}
+                    isVerified={selectedUser.isVerified}
                 />
             )}
         </div>

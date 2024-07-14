@@ -1,4 +1,3 @@
-//app
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from "@/auth.config";
 import EventForm from "./_components/event-form";
@@ -6,12 +5,22 @@ import { redirect } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CalendarIcon, MapPinIcon, TagIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline';
+import { prisma } from "@/server/db";
 
 export default async function CreateEventPage() {
     const session = await getServerSession(authOptions);
 
     if (!session) {
         redirect('/login');
+    }
+
+    const user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { isVerified: true },
+    });
+
+    if (!user?.isVerified) {
+        redirect('/verification');
     }
 
     return (

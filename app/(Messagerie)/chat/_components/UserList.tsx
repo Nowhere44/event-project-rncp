@@ -7,12 +7,14 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { CheckCircle } from 'lucide-react';
 
 interface User {
     id: string;
     first_name: string;
     notificationCount?: number;
     profile_picture: string;
+    isVerified?: boolean;
 }
 
 interface UserListProps {
@@ -71,12 +73,19 @@ const UserList: React.FC<UserListProps> = ({ users, currentUserId, onUserClick, 
                             onClick={() => onUserClick(user)}
                             className="flex items-center p-3 hover:bg-orange-50 cursor-pointer transition-colors duration-200"
                         >
-                            <Avatar className="w-10 h-10 mr-3">
-                                <AvatarImage src={user.profile_picture} alt={user.first_name} />
-                                <AvatarFallback>{user.first_name[0]}</AvatarFallback>
-                            </Avatar>
-                            <div className="flex-grow">
-                                <p className="font-medium text-gray-800">{user.first_name}</p>
+                            <div className="relative">
+                                <Avatar className="w-10 h-10">
+                                    <AvatarImage src={user.profile_picture} alt={user.first_name} />
+                                    <AvatarFallback>{user.first_name[0]}</AvatarFallback>
+                                </Avatar>
+                                {user.isVerified && (
+                                    <CheckCircle className="h-4 w-4 text-orange-500 absolute -bottom-1 -right-1 bg-white rounded-full" />
+                                )}
+                            </div>
+                            <div className="flex-grow ml-3">
+                                <p className="font-medium text-gray-800 flex items-center">
+                                    {user.first_name}
+                                </p>
                             </div>
                             {user.notificationCount && user.notificationCount > 0 && (
                                 <Badge variant="destructive" className="ml-2">

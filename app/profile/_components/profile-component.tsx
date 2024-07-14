@@ -26,6 +26,7 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import Spinner from "@/components/ui/spinner";
+import { CheckCircle } from 'lucide-react';
 
 const userSchema = z.object({
     firstName: z.string().min(1, "Le prénom est requis"),
@@ -170,6 +171,11 @@ export default function ProfileComponent({ userId, userData }: { userId: string;
                                     {formData.firstName[0]}{formData.lastName[0]}
                                 </AvatarFallback>
                             </Avatar>
+                            {userData?.isVerified && (
+                                <div className="absolute bottom-0 right-0 bg-orange-500 rounded-full p-1">
+                                    <CheckCircle className="h-6 w-6 text-white" />
+                                </div>
+                            )}
                             {isEditing && (
                                 <label htmlFor="profilePicture" className="absolute bottom-0 right-0 bg-orange-500 text-white p-2 rounded-full cursor-pointer">
                                     <PencilIcon className="h-5 w-5" />

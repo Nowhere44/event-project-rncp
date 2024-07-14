@@ -34,6 +34,7 @@ export const getAllUsers = async () => {
                 email: true,
                 role: true,
                 profile_picture: true,
+                isVerified: true,
             },
         });
         return users;

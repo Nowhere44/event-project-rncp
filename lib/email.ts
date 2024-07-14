@@ -45,3 +45,47 @@ export async function sendPasswordResetEmail(to: string, resetToken: string) {
         `,
     });
 }
+
+
+export async function sendVerificationStatusEmail(to: string, status: string) {
+    let subject, text;
+
+    if (status === 'APPROVED') {
+        subject = 'Votre compte a été vérifié';
+        text = 'Félicitations ! Votre compte a été vérifié avec succès. Vous pouvez maintenant créer des événements sur notre plateforme.';
+    } else if (status === 'REJECTED') {
+        subject = 'Votre demande de vérification a été rejetée';
+        text = 'Malheureusement, votre demande de vérification a été rejetée. Veuillez vous assurer que votre document d\'identité est clairement lisible et réessayez.';
+    } else {
+        subject = 'Mise à jour de votre demande de vérification';
+        text = 'Il y a eu une mise à jour concernant votre demande de vérification. Veuillez vous connecter à votre compte pour plus de détails.';
+    }
+
+    await transporter.sendMail({
+        from: '"Votre Service d\'Événements" <noreply@votreservice.com>',
+        to,
+        subject,
+        text,
+    });
+}
+
+export async function sendAdminNotificationEmail() {
+    const adminEmail = process.env.ADMIN_EMAIL;
+    if (!adminEmail) {
+        console.error('Email d\'administrateur non configuré');
+        return;
+    }
+
+    try {
+        await transporter.sendMail({
+            from: '"Système de Vérification" <noreply@votreservice.com>',
+            to: adminEmail,
+            subject: 'Nouvelle demande de vérification',
+            text: 'Une nouvelle demande de vérification a été soumise. Veuillez vous connecter au panneau d\'administration pour l\'examiner.',
+        });
+        console.log('Email admin envoyé avec succès');
+    } catch (error) {
+        console.error('Erreur lors de l\'envoi de l\'email admin:', error);
+    }
+}
+
