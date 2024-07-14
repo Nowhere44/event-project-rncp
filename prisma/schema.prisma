@@ -109,8 +109,8 @@ model Event {
   title        String
   description  String
   event_date   DateTime
-  start_time   DateTime      @db.Timestamptz
-  end_time     DateTime      @db.Timestamptz
+  start_time   DateTime
+  end_time     DateTime
   location     String
   latitude     Float?
   longitude    Float?

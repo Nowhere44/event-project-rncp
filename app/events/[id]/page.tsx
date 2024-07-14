@@ -29,11 +29,9 @@ import VideoCall from './_components/VideoCall'
 import { getUserReservations } from '@/actions/reservations/read';
 import { decrypt } from '@/lib/encryption';
 import { format, isBefore, isAfter, parseISO } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import dynamic from 'next/dynamic';
 import ServerSpinner from '@/components/ui/server-spinner';
-import { formatInTimeZone } from 'date-fns-tz';
-import { fr } from 'date-fns/locale';
-
 
 const ClientSpinner = dynamic(() => import('@/components/ui/client-spinner'), {
     ssr: false,
@@ -81,12 +79,6 @@ export default async function EventPage({ params, searchParams }: { params: { id
         await deleteEvent(params.id, event.userId);
         redirect('/events');
     }
-
-    const formatLocalTime = (dateString: string) => {
-        return formatInTimeZone(parseISO(dateString), 'Europe/Paris', 'HH:mm', { locale: fr });
-    };
-
-
 
     return (
         <Suspense fallback={<ServerSpinner />}>
@@ -138,7 +130,7 @@ export default async function EventPage({ params, searchParams }: { params: { id
                                                     Horaires
                                                 </dt>
                                                 <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                                                    {formatLocalTime(event.start_time)} - {formatLocalTime(event.end_time)}
+                                                    {format(eventStartTime, 'HH:mm')} - {format(eventEndTime, 'HH:mm')}
                                                 </dd>
                                             </div>
                                             {event.isOnline && (
