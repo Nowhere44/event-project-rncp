@@ -37,7 +37,7 @@ export default function LoginForm() {
 
     if (status === 'loading') {
         return (
-            <div className="flex justify-center items-center h-screen">
+            <div className="flex justify-center items-center h-screen absolute inset-0">
                 <Spinner />
             </div>
         );
