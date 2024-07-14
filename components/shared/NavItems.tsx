@@ -14,10 +14,12 @@ const NavItems: React.FC<NavItemsProps> = ({ closeSheet }) => {
     const { data: session } = useSession();
 
     const isCreateEventActive = pathname === '/events/create' || pathname.startsWith('/verification');
+    const isEventsActive = pathname === '/events' || pathname.startsWith('/event');
 
     const headerLinks = [
         { label: 'Accueil', route: '/' },
         { label: 'Créer un événement', route: '/events/create', isActive: isCreateEventActive },
+        { label: 'Événements', route: '/events', isActive: isEventsActive },
         { label: 'Mon Profil', route: `/profile/${session?.user?.id}` },
         { label: 'Messagerie', route: "/chat" },
         ...(session?.user?.role === 'Admin' ? [{ label: 'Admin', route: '/admin/verifications' }] : [])
