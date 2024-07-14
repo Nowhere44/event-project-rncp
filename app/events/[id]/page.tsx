@@ -29,9 +29,10 @@ import VideoCall from './_components/VideoCall'
 import { getUserReservations } from '@/actions/reservations/read';
 import { decrypt } from '@/lib/encryption';
 import { format, isBefore, isAfter, parseISO } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import dynamic from 'next/dynamic';
 import ServerSpinner from '@/components/ui/server-spinner';
+import { formatInTimeZone } from 'date-fns-tz';
+import { fr } from 'date-fns/locale';
 
 
 const ClientSpinner = dynamic(() => import('@/components/ui/client-spinner'), {
@@ -82,9 +83,9 @@ export default async function EventPage({ params, searchParams }: { params: { id
     }
 
     const formatLocalTime = (dateString: string) => {
-        const date = parseISO(dateString);
-        return format(date, 'HH:mm', { locale: fr });
+        return formatInTimeZone(parseISO(dateString), 'Europe/Paris', 'HH:mm', { locale: fr });
     };
+
 
 
     return (

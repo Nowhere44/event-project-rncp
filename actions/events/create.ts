@@ -7,12 +7,16 @@ export async function createEvent(eventData: any, userId: string) {
         throw new Error("Le titre est requis");
     }
 
+    if (start_time === end_time) {
+        throw new Error("L'heure de début et de fin doivent être différentes");
+    }
+
     const event = await prisma.event.create({
         data: {
             title,
             description,
-            start_time,
-            end_time,
+            start_time: new Date(start_time),
+            end_time: new Date(end_time),
             ...otherData,
             userId,
             tags: {

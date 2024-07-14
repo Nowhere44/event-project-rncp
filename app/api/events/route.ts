@@ -4,6 +4,8 @@ import { authOptions } from "@/auth.config";
 import { createEvent } from '@/actions';
 import { uploadToS3 } from '@/lib/s3Upload';
 import { getEvents } from '@/actions/events/read';
+import { parseISO } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 
 export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions);
@@ -23,12 +25,12 @@ export async function POST(req: NextRequest) {
                 if (field === 'tags') {
                     eventData[field] = JSON.parse(value as string);
                 } else if (field === 'event_date') {
-                    eventData[field] = new Date(value as string);
+                    eventData[field] = parseISO(value as string);
                 } else if (field === 'start_time' || field === 'end_time') {
                     const [hours, minutes] = (value as string).split(':');
                     const date = new Date(eventData.event_date);
                     date.setHours(parseInt(hours, 10), parseInt(minutes, 10));
-                    eventData[field] = date;
+                    eventData[field] = formatInTimeZone(date, 'Europe/Paris', "yyyy-MM-dd'T'HH:mm:ssXXX");
                 } else if (field === 'capacity' || field === 'price') {
                     eventData[field] = Number(value);
                 } else if (field === 'is_paid' || field === 'isOnline') {
