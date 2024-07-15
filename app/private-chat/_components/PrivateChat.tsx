@@ -262,7 +262,7 @@ const PrivateChat: React.FC<PrivateChatProps> = ({
     );
 
     // Version mobile
-    if (typeof window !== 'undefined' && window.innerWidth < 400) {
+    if (typeof window !== 'undefined' && window.innerWidth < 100) {
         return (
             <Sheet open={true} onOpenChange={onClose}>
                 <SheetContent side="right" className="w-full p-0 flex flex-col">
@@ -285,7 +285,7 @@ const PrivateChat: React.FC<PrivateChatProps> = ({
     // Version desktop
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 mt-16">
-            <div className="bg-white rounded-lg w-full max-w-2xl h-[90vh] flex flex-col shadow-xl">
+            <div className="bg-white rounded-lg w-full max-w-2xl h-[75vh] flex flex-col shadow-xl">
                 <div className="p-4 border-b flex justify-between items-center bg-gray-100">
 
                     <div className='flex gap-2 items-center'>
