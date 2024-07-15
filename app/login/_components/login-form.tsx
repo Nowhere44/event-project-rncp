@@ -1,32 +1,60 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signIn, useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Spinner from "@/components/ui/spinner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function LoginForm() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
     const router = useRouter();
     const { data: session, status } = useSession();
+    const searchParams = useSearchParams();
+    const [is2FARequired, setIs2FARequired] = useState(false);
+    const [twoFactorToken, setTwoFactorToken] = useState('');
+    const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+    useEffect(() => {
+        if (searchParams.get('verified') === 'true') {
+            setSuccess('Votre email a été vérifié avec succès. Vous pouvez maintenant vous connecter.');
+        }
+    }, [searchParams]);
+
+    useEffect(() => {
+        if (status === 'authenticated' && session?.user?.id) {
+            router.push(`/profile/${session.user.id}`);
+        }
+    }, [status, session, router]);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        setError('');
+        setSuccess('');
         try {
             const result = await signIn('credentials', {
                 redirect: false,
                 email,
                 password,
+                twoFactorToken: twoFactorToken,
             });
-            if (result?.error) {
-                setError(result.error);
+
+            if (result?.error === "2FA_REQUIRED") {
+                setIs2FARequired(true);
+                setError("Veuillez entrer votre code 2FA.");
+            } else if (result?.error === "INVALID_2FA_TOKEN") {
+                setError("Code 2FA invalide. Veuillez réessayer.");
+            } else if (result?.error) {
+                setError("Email ou mot de passe incorrect.");
             } else if (result?.ok) {
+                setIsLoggingIn(true);
                 router.push(`/profile/${session?.user?.id}`);
             }
         } catch (error) {
@@ -35,17 +63,12 @@ export default function LoginForm() {
         }
     };
 
-    if (status === 'loading') {
+    if (status === 'loading' || isLoggingIn) {
         return (
-            <div className="flex justify-center items-center h-screen absolute inset-0">
+            <div className="fixed inset-0 flex justify-center items-center bg-white z-50">
                 <Spinner />
             </div>
         );
-    }
-
-    if (status === 'authenticated') {
-        router.push(`/profile/${session?.user?.id}`);
-        return null;
     }
 
     return (
@@ -56,6 +79,11 @@ export default function LoginForm() {
                     Entrez votre email ci-dessous pour vous connecter à votre compte
                 </p>
             </div>
+            {success && (
+                <Alert>
+                    <AlertDescription>{success}</AlertDescription>
+                </Alert>
+            )}
             <form onSubmit={handleSubmit} className="grid gap-4">
                 <div className="grid gap-2">
                     <Label htmlFor="email">Email</Label>
@@ -83,9 +111,28 @@ export default function LoginForm() {
                         required
                     />
                 </div>
-                {error && <p className="text-red-500 text-center">{error}</p>}
+                {is2FARequired && (
+                    <div className="grid gap-2">
+                        <Label htmlFor="twoFactorToken">Code 2FA</Label>
+                        <Input
+                            id="twoFactorToken"
+                            type="text"
+                            value={twoFactorToken}
+                            onChange={(e) => setTwoFactorToken(e.target.value)}
+                            placeholder="Entrez le code à 6 chiffres"
+                            required
+                        />
+                    </div>
+                )}
+
+                {error && (
+                    <Alert variant="destructive">
+                        <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                )}
+
                 <Button type="submit" className="w-full bg-orange-500 hover:bg-orange-600">
-                    Se connecter
+                    {is2FARequired ? 'Vérifier le code 2FA' : 'Se connecter'}
                 </Button>
             </form>
             <div className="mt-4 text-center text-sm">

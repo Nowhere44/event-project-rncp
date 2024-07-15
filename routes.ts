@@ -1,9 +1,11 @@
+//route.ts
 export const publicRoutes = [
     "/",
     "/events",
     "/events/*",
     "/forgot-password",
-    "/reset-password/*"
+    "/reset-password/*",
+    "/verify-email/*",
 ]
 
 export const authRoutes = [

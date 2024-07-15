@@ -1,3 +1,4 @@
+//lib/email.ts
 import nodemailer from 'nodemailer';
 
 const transporter = nodemailer.createTransport({
@@ -89,3 +90,17 @@ export async function sendAdminNotificationEmail() {
     }
 }
 
+export async function sendVerificationEmail(to: string, token: string) {
+    const verificationUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/verify-email/${token}`;
+    await transporter.sendMail({
+        from: '"Votre Service d\'Événements" <noreply@votreservice.com>',
+        to: to,
+        subject: "Vérifiez votre adresse email",
+        text: `Bienvenue ! Pour vérifier votre adresse email, veuillez cliquer sur le lien suivant : ${verificationUrl}`,
+        html: `
+            <h1>Bienvenue sur notre plateforme !</h1>
+            <p>Pour vérifier votre adresse email, veuillez cliquer sur le lien ci-dessous :</p>
+            <a href="${verificationUrl}">Vérifier mon adresse email</a>
+        `,
+    });
+}

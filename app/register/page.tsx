@@ -1,3 +1,4 @@
+//app/register/page.tsx
 import Image from "next/image";
 import RegisterForm from './_components/register-form';
 

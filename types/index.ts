@@ -39,7 +39,6 @@ export interface IEvent {
     id: string;
     title: string;
     description: string;
-    imageUrl?: string;
     start_time: Date;
     end_time: Date;
     event_date: Date;
@@ -72,6 +71,7 @@ export interface IEvent {
     reservations: IReservation[];
     availableTickets?: number;
     images: Image[];
+    imageUrl: string | null;
 }
 
 export interface Image {
@@ -133,7 +133,7 @@ export interface IUser {
     date_of_birth?: Date;
     description?: string;
     isVerified: boolean;
-
+    twoFactorEnabled: boolean;
 }
 
 export interface Message {

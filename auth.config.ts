@@ -1,9 +1,11 @@
-import type { NextAuthOptions, User } from "next-auth";
+//auth.config.ts
+import type { NextAuthOptions } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/server/db";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { Role } from "@prisma/client";
+import { verifyToken } from '@/lib/twoFactor';
 
 export const authOptions: NextAuthOptions = {
     adapter: PrismaAdapter(prisma) as any,
@@ -12,7 +14,8 @@ export const authOptions: NextAuthOptions = {
             name: "Credentials",
             credentials: {
                 email: { label: "Email", type: "text" },
-                password: { label: "Mot de passe", type: "password" }
+                password: { label: "Mot de passe", type: "password" },
+                twoFactorToken: { label: "Code 2FA", type: "text" }
             },
             async authorize(credentials): Promise<any | null> {
                 if (!credentials?.email || !credentials?.password) {
@@ -32,6 +35,20 @@ export const authOptions: NextAuthOptions = {
                 if (!isPasswordValid) {
                     return null;
                 }
+                if (!user.emailVerified) {
+                    throw new Error("Email not verified");
+                }
+
+                if (user.twoFactorEnabled) {
+                    if (!credentials.twoFactorToken) {
+                        throw new Error("2FA_REQUIRED");
+                    }
+
+                    const isTokenValid = verifyToken(user.twoFactorSecret!, credentials.twoFactorToken);
+                    if (!isTokenValid) {
+                        throw new Error("INVALID_2FA_TOKEN");
+                    }
+                }
 
                 return {
                     id: user.id,
@@ -41,6 +58,8 @@ export const authOptions: NextAuthOptions = {
                     role: user.role,
                     image: user.profile_picture,
                     isVerified: user.isVerified,
+                    emailVerified: user.emailVerified,
+                    twoFactorEnabled: user.twoFactorEnabled
                 };
             }
         })
@@ -55,6 +74,8 @@ export const authOptions: NextAuthOptions = {
                 token.role = user.role;
                 token.image = user.image;
                 token.isVerified = user.isVerified;
+                token.emailVerified = user.emailVerified ? true : false;
+                token.twoFactorEnabled = user.twoFactorEnabled;
             }
             return token;
         },
@@ -67,6 +88,8 @@ export const authOptions: NextAuthOptions = {
                 session.user.role = token.role as Role;
                 session.user.image = token.image as string | undefined;
                 session.user.isVerified = token.isVerified as boolean;
+                session.user.emailVerified = token.emailVerified as boolean;
+                session.user.twoFactorEnabled = token.twoFactorEnabled as boolean;
             }
             return session;
         }

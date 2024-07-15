@@ -160,7 +160,8 @@ export async function getEvents(params: {
         return {
             ...event,
             availableTickets,
-            reservations: undefined
+            reservations: undefined,
+            imageUrl: event.images[0]?.url || null
         };
     });
 

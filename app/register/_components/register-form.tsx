@@ -1,3 +1,4 @@
+//app/register/_components/register-form.tsx
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -293,7 +294,7 @@ export default function RegisterForm() {
                     <DialogHeader>
                         <DialogTitle>Inscription réussie!</DialogTitle>
                         <DialogDescription>
-                            Votre compte a été créé avec succès. Vous serez redirigé vers la page de connexion dans {countdown} secondes.
+                            Votre compte a été créé avec succès. Un email de vérification a été envoyé à votre adresse. Veuillez vérifier votre boîte de réception et cliquer sur le lien pour activer votre compte.
                         </DialogDescription>
                     </DialogHeader>
                 </DialogContent>

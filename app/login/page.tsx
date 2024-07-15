@@ -1,5 +1,7 @@
+import dynamic from 'next/dynamic';
 import Image from "next/image";
-import LoginForm from './_components/login-form';
+
+const LoginForm = dynamic(() => import('./_components/login-form'), { ssr: false });
 
 export default function LoginPage() {
     return (

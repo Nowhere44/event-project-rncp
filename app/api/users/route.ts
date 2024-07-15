@@ -1,3 +1,4 @@
+//api/users/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserByEmail, getAllUsers } from '@/actions/users/read';
 import { createUser } from '@/actions/users/create';

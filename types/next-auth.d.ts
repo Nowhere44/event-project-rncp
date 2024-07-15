@@ -1,3 +1,4 @@
+//types/next-auth.d.ts
 import "next-auth";
 import { Role } from "@prisma/client";
 
@@ -9,7 +10,9 @@ declare module "next-auth" {
         lastName: string;
         role: Role;
         image?: string | null;
+        emailVerified: boolean;
         isVerified?: boolean;
+        twoFactorEnabled?: boolean;
     }
 
     interface Session {
@@ -25,6 +28,8 @@ declare module "next-auth/jwt" {
         lastName: string;
         role: Role;
         image?: string | null;
+        emailVerified: boolean;
         isVerified?: boolean;
+        twoFactorEnabled?: boolean;
     }
 }

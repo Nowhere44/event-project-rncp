@@ -10,7 +10,7 @@ import { IEvent } from '@/types'
 import SearchFilter from './events/_components/search-filter'
 import dynamic from 'next/dynamic'
 import { motion } from 'framer-motion'
-import { Calendar, MapPin, Users, Star, Clock, Zap } from 'lucide-react'
+import { Calendar, MapPin, Users, Star, Clock, Zap, Shield, CheckCircle, Lock } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const EventMap = dynamic(() => import('./events/_components/event-map'), { ssr: false })
@@ -122,6 +122,9 @@ export default function Home() {
               { icon: Star, title: "Expériences Uniques", description: "Participez à des événements exclusifs et mémorables." },
               { icon: Clock, title: "Gestion Simplifiée", description: "Organisez et gérez vos événements sans effort." },
               { icon: Zap, title: "Réservation Instantanée", description: "Réservez votre place en quelques secondes." },
+              { icon: Shield, title: "Sécurité Renforcée", description: "Authentification à deux facteurs pour protéger votre compte." },
+              { icon: CheckCircle, title: "Vérification des Utilisateurs", description: "Communauté de confiance avec des profils vérifiés." },
+              { icon: Lock, title: "Paiements Sécurisés", description: "Transactions cryptées et sécurisées pour votre tranquillité." },
             ].map((feature, index) => (
               <motion.div
                 key={index}

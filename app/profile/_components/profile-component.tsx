@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import Spinner from "@/components/ui/spinner";
 import { CheckCircle } from 'lucide-react';
+import { ShieldCheckIcon } from '@heroicons/react/24/outline';
 
 const userSchema = z.object({
     firstName: z.string().min(1, "Le prénom est requis"),
@@ -53,6 +54,7 @@ export default function ProfileComponent({ userId, userData }: { userId: string;
     const [error, setError] = useState<string | null>(null);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [is2FAEnabled, setIs2FAEnabled] = useState(false);
 
     useEffect(() => {
         if (userData) {
@@ -64,9 +66,36 @@ export default function ProfileComponent({ userId, userData }: { userId: string;
                 description: userData.description || '',
             });
             setPreviewImage(userData.profile_picture || null);
+            setIs2FAEnabled(userData?.twoFactorEnabled || false);
             setIsLoading(false);
         }
     }, [userData]);
+
+    const handle2FAToggle = async () => {
+        try {
+            if (!is2FAEnabled) {
+                // Si 2FA n'est pas activé, redirigez vers la page de configuration
+                router.push(`/profile/two-factor`);
+            } else {
+                // Si 2FA est déjà activé, désactivez-le
+                const response = await fetch(`/api/users/${userId}/2fa`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ enable: false }),
+                });
+
+                if (response.ok) {
+                    setIs2FAEnabled(false);
+                } else {
+                    throw new Error('Échec de la désactivation du 2FA');
+                }
+            }
+        } catch (error) {
+            setError("Erreur lors de la mise à jour de la double authentification");
+        }
+    };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -299,6 +328,21 @@ export default function ProfileComponent({ userId, userData }: { userId: string;
                             )}
 
                             {error && <p className="text-red-500 text-sm">{error}</p>}
+
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center">
+                                    <ShieldCheckIcon className="h-5 w-5 mr-2 text-orange-500" />
+                                    <span className="text-gray-700">Double Authentification</span>
+                                </div>
+                                <Button
+                                    type="button"
+                                    onClick={handle2FAToggle}
+                                    className={`${is2FAEnabled ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-300 hover:bg-gray-400'} text-white`}
+                                >
+                                    {is2FAEnabled ? 'Activée' : 'Désactivée'}
+                                </Button>
+                            </div>
+
 
                             <div className="flex space-x-2">
                                 {isEditing ? (
